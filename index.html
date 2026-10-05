@@ -1,0 +1,807 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}</style></head><body><title>Mario Baseball League</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: Yahoo-style purple top bar with tabs, then a centered two-column work area of white cards on a lavender-grey ground. */
+:root{
+  --bg:#f2f0f7; --surface:#ffffff; --surface-2:#f8f7fb; --fg:#1b1826; --muted:#6c6880; --line:#e2dfeb;
+  --brand:#5f01d1; --brand-deep:#43009a; --brand-fg:#ffffff; --brand-soft:#efe6ff;
+  --good:#17813f; --good-soft:#e3f5e9; --bad:#c8102e; --bad-soft:#fde7ea; --warn:#b36b00; --warn-soft:#fff2d6;
+  --font-display:"Rubik","Segoe UI",system-ui,sans-serif; --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(27,24,38,.06),0 4px 14px rgba(27,24,38,.05);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14111c; --surface:#1e1a29; --surface-2:#262133; --fg:#ece9f4; --muted:#a6a1b8; --line:#352f47;
+  --brand:#7a35ff; --brand-deep:#2a0b5c; --brand-fg:#ffffff; --brand-soft:#2e2244;
+  --good:#4cd27a; --good-soft:#163522; --bad:#ff6b7f; --bad-soft:#3d1a22; --warn:#ffbe4d; --warn-soft:#3a2b10;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14111c; --surface:#1e1a29; --surface-2:#262133; --fg:#ece9f4; --muted:#a6a1b8; --line:#352f47;
+  --brand:#7a35ff; --brand-deep:#2a0b5c; --brand-fg:#ffffff; --brand-soft:#2e2244;
+  --good:#4cd27a; --good-soft:#163522; --bad:#ff6b7f; --bad-soft:#3d1a22; --warn:#ffbe4d; --warn-soft:#3a2b10;
+  --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.4}
+button,input,select{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance}
+a{color:var(--brand)}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--brand);color:var(--brand-fg);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.topbar-inner{max-width:1120px;margin:0 auto;padding:10px 16px 0;display:flex;flex-direction:column;gap:8px}
+.brand-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.logo .ball{width:24px;height:24px;border-radius:50%;background:#fff;position:relative;display:inline-block}
+.logo .ball:before,.logo .ball:after{content:"";position:absolute;top:3px;bottom:3px;width:5px;border:2px solid #c8102e;border-left:0;border-right:0;border-radius:50%}
+.logo .ball:before{left:4px;border-right:2px solid #c8102e;border-left:0;border-radius:0 50% 50% 0}
+.logo .ball:after{right:4px;border-left:2px solid #c8102e;border-right:0;border-radius:50% 0 0 50%}
+.logo small{font-weight:500;font-size:13px;opacity:.85;margin-left:4px}
+.spacer{flex:1}
+.managing{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.managing select{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:5px 8px}
+.managing select option{color:#1b1826;background:#fff}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.pill.week{background:rgba(255,255,255,.16);color:#fff}
+.pill.mode{background:rgba(255,255,255,.16);color:#fff;text-transform:none;letter-spacing:0}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:none;border:0;color:rgba(255,255,255,.8);padding:10px 14px 9px;font-weight:600;font-size:15px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+.tab:hover{color:#fff}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.tab:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #ffb000;outline-offset:2px}
+.banner{background:var(--warn-soft);color:var(--fg);border-bottom:1px solid var(--line);padding:8px 16px;font-size:14px;text-align:center}
+.main{max-width:1120px;margin:0 auto;padding-block:18px 48px;padding-inline:16px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.grid > *{min-width:0}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.stack{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.card-h h2{font-size:16px;font-weight:700}
+.card-h .sub{color:var(--muted);font-size:13px}
+.card-b{padding:14px 16px}
+.card-b.flush{padding:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.me td{background:var(--brand-soft)}
+tr.empty td{color:var(--muted);font-style:italic}
+.slot{display:inline-block;min-width:34px;text-align:center;font-family:var(--font-display);font-weight:700;font-size:12px;padding:3px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line)}
+.slot.bn{color:var(--muted)}
+.slotsel{padding:3px 4px;border-radius:5px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:12px;font-family:var(--font-display)}
+.avatar{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;color:#fff;font-family:var(--font-display);font-weight:800;font-size:13px;flex:none}
+.avatar.lg{width:52px;height:52px;font-size:22px}
+.teamline{display:inline-flex;align-items:center;gap:8px;min-width:0;vertical-align:middle;max-width:100%}
+.teamline .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.teamline .m{color:var(--muted);font-size:12px}
+.aka{color:var(--muted);font-size:12px}
+.cap{display:inline-block;background:#ffb000;color:#1b1826;font-size:10px;font-weight:800;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:5px;padding:2px 7px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
+.tag.fa{background:var(--good-soft);color:var(--good);border-color:transparent}
+.tag.wv{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.tag.std{background:var(--brand-soft);color:var(--brand);border-color:transparent}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 12px;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-fg)}
+.btn.primary:hover{background:var(--brand-deep)}
+.btn.good{color:var(--good);border-color:var(--good)}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:3px 9px;font-size:12px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.filters select,.filters input{padding:6px 9px;border-radius:7px;border:1px solid var(--line);background:var(--surface);min-width:0}
+.filters input{flex:1;min-width:140px}
+.teamhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.teamhead h1{font-size:24px;font-weight:800}
+.teamhead .meta{color:var(--muted);font-size:14px}
+.stats{display:flex;gap:18px;flex-wrap:wrap;margin-left:auto}
+.stat{text-align:center}
+.stat b{display:block;font-family:var(--font-display);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.matchup{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding:14px 16px}
+.matchup .side{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.matchup .side .n{font-weight:700;font-size:15px}
+.matchup .side .r{color:var(--muted);font-size:12px}
+.matchup .score{font-family:var(--font-display);font-weight:800;font-size:32px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:10px}
+.matchup .score span.v{opacity:.5;font-size:16px}
+.matchup .score input{width:58px;text-align:center;font:inherit;font-size:24px;padding:4px;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+.matchup .side.win .n{color:var(--good)}
+.matchup-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.weeknav{display:flex;align-items:center;gap:8px}
+.weeknav b{font-family:var(--font-display);font-size:16px;min-width:80px;text-align:center}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:10px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.list li:last-child{border-bottom:0}
+.list .when{color:var(--muted);font-size:12px;min-width:92px;font-variant-numeric:tabular-nums}
+.list .txt{flex:1;min-width:160px}
+.kind{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 6px;background:var(--surface-2);border:1px solid var(--line)}
+.kind.add{color:var(--good)}.kind.drop{color:var(--bad)}.kind.waiver{color:var(--warn)}.kind.trade{color:var(--brand)}
+.prio{counter-reset:p}
+.prio li{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--line)}
+.prio li:last-child{border-bottom:0}
+.prio .num{font-family:var(--font-display);font-weight:800;color:var(--muted);width:20px}
+.empty{padding:22px 16px;color:var(--muted);text-align:center}
+.sched-wrap{overflow-x:auto}
+.sched td.wk{font-family:var(--font-display);font-weight:800;color:var(--muted);width:50px}
+.sched .g{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.sched .g .at{color:var(--muted);font-size:12px}
+.sched .g .res{font-variant-numeric:tabular-nums;font-weight:700;margin-left:4px}
+.draft th.rd,.draft td.rd{text-align:center;color:var(--muted);font-family:var(--font-display);font-weight:800;width:40px}
+.draft td.std{color:var(--brand);font-weight:600}
+.draft tr.udfa td{background:var(--bad-soft)}
+.form{display:grid;gap:10px}
+.form label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.form input,.form select{padding:7px 10px;border-radius:7px;border:1px solid var(--line);background:var(--surface);font-weight:400;color:var(--fg)}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px}
+.checks label{display:flex;gap:6px;align-items:center;font-weight:400;color:var(--fg);font-size:13px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:600px){.two{grid-template-columns:1fr}.matchup .score input{width:46px;font-size:20px}}
+.modal-bg{position:fixed;inset:0;background:rgba(10,6,20,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);color:var(--fg);border-radius:12px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);max-height:90vh;overflow:auto}
+.modal .card-h h2{font-size:17px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:60;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.toast.bad{background:var(--bad);color:#fff}
+.help{font-size:13px;color:var(--muted)}
+.notice{background:var(--brand-soft);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px}
+.setup{max-width:560px;margin:40px auto;text-align:center}
+.setup h1{font-size:28px;margin-bottom:8px}
+.setup p{color:var(--muted)}
+.vs-strip{display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:wrap}
+.vs-strip .vs{font-family:var(--font-display);font-weight:800;color:var(--muted)}
+.streak{font-weight:700}
+.streak.w{color:var(--good)}.streak.l{color:var(--bad)}
+.conf-title{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:var(--font-display);font-weight:700}
+.conf-title .tag{margin-left:auto}
+@media (prefers-reduced-motion:no-preference){.card{transition:box-shadow .15s}}
+</style>
+
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-row">
+        <div class="logo"><span class="ball"></span>MBL <small>Mario Super Sluggers Fantasy</small></div>
+        <span class="pill week" id="weekpill">Week 1</span>
+        <span class="pill mode" id="modepill" hidden></span>
+        <div class="spacer"></div>
+        <div class="managing"><label for="acting">Managing</label><select id="acting"></select></div>
+      </div>
+      <nav class="tabs" id="tabs"></nav>
+    </div>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+  <main class="main" id="view"></main>
+  <div id="modal-root"></div>
+  <div id="toast-root"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- League data ---------- */
+const CONFS = {A:{name:'Super League'}, N:{name:'Shitter League'}};
+const POS = ['P','C','1B','2B','3B','SS','LF','CF','RF'];
+const MAX_CHARS = 12;
+const TEAM_ORDER = ['connor','stefano','nolan','matas','james','brodie'];
+// [name, group, captainEligible]
+const CHARACTERS = [
+ ['Mario','Mushroom Kingdom',1],['Luigi','Mushroom Kingdom',1],['Peach','Mushroom Kingdom',1],['Daisy','Mushroom Kingdom',1],
+ ['Wario','Wario Bros',1],['Waluigi','Wario Bros',1],
+ ['Yoshi','Yoshi',1],['Red Yoshi','Yoshi'],['Blue Yoshi','Yoshi'],['Yellow Yoshi','Yoshi'],['Pink Yoshi','Yoshi'],['Light Blue Yoshi','Yoshi'],['Birdo','Yoshi',1],
+ ['Donkey Kong','Kong',1],['Diddy Kong','Kong',1],['Dixie Kong','Kong'],['Funky Kong','Kong'],['Tiny Kong','Kong'],
+ ['King K. Rool','Kremling'],['Green Kritter','Kremling'],['Blue Kritter','Kremling'],['Red Kritter','Kremling'],['Brown Kritter','Kremling'],
+ ['Bowser','Koopa Troop',1],['Bowser Jr.','Koopa Troop',1],
+ ['Toad','Toad'],['Blue Toad','Toad'],['Yellow Toad','Toad'],['Green Toad','Toad'],['Purple Toad','Toad'],['Toadette','Toad'],['Toadsworth','Toad'],
+ ['Baby Mario','Baby'],['Baby Luigi','Baby'],['Baby Peach','Baby'],['Baby Daisy','Baby'],['Baby DK','Baby'],
+ ['Boo','Boo'],['King Boo','Boo'],['Petey Piranha','Piranha'],
+ ['Goomba','Goomba'],['Paragoomba','Goomba'],
+ ['Green Koopa Troopa','Koopa'],['Red Koopa Troopa','Koopa'],['Green Paratroopa','Koopa'],['Red Paratroopa','Koopa'],
+ ['Blue Magikoopa','Magikoopa'],['Red Magikoopa','Magikoopa'],['Green Magikoopa','Magikoopa'],['Yellow Magikoopa','Magikoopa'],
+ ['Dry Bones','Dry Bones'],['Green Dry Bones','Dry Bones'],['Blue Dry Bones','Dry Bones'],['Dark Bones','Dry Bones'],
+ ['Hammer Bro','Bros'],['Fire Bro','Bros'],['Boomerang Bro','Bros'],
+ ['Shy Guy','Shy Guy'],['Blue Shy Guy','Shy Guy'],['Yellow Shy Guy','Shy Guy'],['Green Shy Guy','Shy Guy'],['Gray Shy Guy','Shy Guy'],
+ ['Blue Pianta','Isle Delfino'],['Red Pianta','Isle Delfino'],['Yellow Pianta','Isle Delfino'],['Blue Noki','Isle Delfino'],['Red Noki','Isle Delfino'],['Green Noki','Isle Delfino'],
+ ['Wiggler','Other'],['Monty Mole','Other'],['Blooper','Other'],['Mii','Other'],
+];
+const STADIUMS = ['Mario Stadium',"Luigi's Mansion",'Peach Ice Garden','Daisy Cruiser','Yoshi Park','Wario City','DK Jungle',"Bowser's Castle","Bowser Jr.'s Playhouse"];
+const AKA = {'Yellow Shy Guy':'Piss Guy','Yellow Toad':'Piss Toad','Yellow Yoshi':'Piss Yoshi','Yellow Magikoopa':'Pissard','Blooper':'Jose','Blue Yoshi':'Dark Blue Yoshi','Petey Piranha':'Petey Pirhanna','Monty Mole':'Monty Molerat','Mii':'Undetermined'};
+const CHAR = {};
+CHARACTERS.forEach(([n,g,c])=>{CHAR[n]={name:n,group:g,cap:!!c,type:'char'};});
+STADIUMS.forEach(s=>{CHAR[s]={name:s,group:'Stadium',cap:false,type:'stadium'};});
+const ALL_NAMES = Object.keys(CHAR);
+const isStadium = n => CHAR[n] && CHAR[n].type==='stadium';
+
+const DRAFT = {
+ connor:{name:'Connor',manager:'Connor',conf:'A',color:'#d7191c',picks:['Petey Piranha','Monty Mole','Mario','Red Pianta','Luigi','Red Kritter','Light Blue Yoshi','Baby Daisy','Gray Shy Guy','Blue Toad','Blue Yoshi','Mario Stadium'],udfa:'Green Noki'},
+ stefano:{name:'Stefano',manager:'Stefano',conf:'A',color:'#2e9e4f',picks:['Bowser Jr.','Wiggler','Dark Bones','Hammer Bro','Blue Magikoopa','Toadette','Brown Kritter','Green Koopa Troopa','Blue Dry Bones','Purple Toad',"Bowser Jr.'s Playhouse",'Yellow Shy Guy'],udfa:'Goomba'},
+ nolan:{name:'Nolan',manager:'Nolan',conf:'A',color:'#e8750a',picks:['Bowser','Fire Bro','Diddy Kong','Tiny Kong','Baby DK','Green Magikoopa','Green Dry Bones','Green Paratroopa','Red Yoshi','Pink Yoshi','Toad',"Bowser's Castle"],udfa:'Paragoomba'},
+ matas:{name:'Matas',manager:'Matas',conf:'N',color:'#6f2dbd',picks:['Waluigi','Blue Pianta','Toadsworth','Peach','Daisy','Wario','Green Kritter','Baby Peach','Baby Mario','Green Toad','Shy Guy','DK Jungle'],udfa:'Baby Luigi'},
+ james:{name:'James',manager:'James',conf:'N',color:'#8a5a2b',picks:['Donkey Kong','Funky Kong','Boomerang Bro','Dixie Kong','Yellow Magikoopa','Red Magikoopa','Blue Kritter','Dry Bones','Red Koopa Troopa','Yellow Toad','Wario City','Red Noki'],udfa:'Blue Shy Guy'},
+ brodie:{name:"Oakland A's",manager:'Brodie',conf:'N',color:'#0f5c3e',picks:['Birdo','King Boo','Yoshi','Boo','Blooper','King K. Rool','Mii','Yellow Pianta','Red Paratroopa','Yellow Yoshi','Green Shy Guy',"Luigi's Mansion"],udfa:'Blue Noki'},
+};
+// 12 weeks, 3 games a week. Conference rivals meet 3 times, cross-conference twice. Week 1 fixed.
+const SCHEDULE = [
+ [1,'nolan','stefano'],[1,'brodie','connor'],[1,'james','matas'],
+ [2,'connor','stefano'],[2,'matas','nolan'],[2,'brodie','james'],
+ [3,'connor','james'],[3,'nolan','brodie'],[3,'stefano','matas'],
+ [4,'stefano','connor'],[4,'james','nolan'],[4,'matas','brodie'],
+ [5,'connor','brodie'],[5,'stefano','nolan'],[5,'matas','james'],
+ [6,'james','connor'],[6,'brodie','nolan'],[6,'matas','stefano'],
+ [7,'connor','matas'],[7,'nolan','stefano'],[7,'james','brodie'],
+ [8,'nolan','connor'],[8,'brodie','stefano'],[8,'james','matas'],
+ [9,'connor','stefano'],[9,'nolan','matas'],[9,'brodie','james'],
+ [10,'connor','nolan'],[10,'stefano','james'],[10,'brodie','matas'],
+ [11,'matas','connor'],[11,'nolan','james'],[11,'stefano','brodie'],
+ [12,'nolan','connor'],[12,'james','stefano'],[12,'matas','brodie'],
+];
+const WEEKS = 12;
+
+function buildInitialData(){
+  const teams={};
+  TEAM_ORDER.forEach(id=>{
+    const d=DRAFT[id];
+    const chars=[...d.picks.filter(p=>!isStadium(p)), d.udfa];
+    const stadium=d.picks.find(isStadium)||null;
+    const roster=chars.map((p,i)=>({p, slot:i<9?POS[i]:'BN'}));
+    const captain=chars.find(c=>CHAR[c].cap)||null;
+    teams[id]={id,name:d.name,manager:d.manager,conf:d.conf,color:d.color,roster,stadium,captain};
+  });
+  const games={};
+  SCHEDULE.forEach((g,i)=>{const id='w'+String(g[0]).padStart(2,'0')+'-'+((i%3)+1);games[id]={id,week:g[0],home:g[1],away:g[2],hs:null,as:null,final:false};});
+  const settings={currentWeek:1,waiverDays:2,waiverOrder:[...TEAM_ORDER].reverse(),createdAt:new Date().toISOString()};
+  const waivers={items:{}};
+  return {teams,games,settings,waivers};
+}
+
+/* ---------- Store (shared db when available, browser storage otherwise) ---------- */
+const S={ready:false,teams:{},games:{},claims:{},trades:{},log:{},settings:null,waivers:null};
+const access={mode:'local',canWrite:true,canAdmin:true,uid:null};
+let db=null;
+const TAB_ID='tab-'+Math.random().toString(36).slice(2);
+const LS_KEY='mbl-league-v1';
+
+function lsLoad(){try{const raw=localStorage.getItem(LS_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+function lsSave(){try{localStorage.setItem(LS_KEY,JSON.stringify({teams:S.teams,games:S.games,claims:S.claims,trades:S.trades,log:S.log,settings:S.settings,waivers:S.waivers}));}catch(e){}}
+
+function applyLocal(coll,id,data){
+  if(coll==='league'){ S[id]=data; }
+  else { if(data===null) delete S[coll][id]; else S[coll][id]=data; }
+}
+async function write(coll,id,data){
+  applyLocal(coll,id,data);
+  if(access.mode==='db'){
+    try{ await db.doc(coll+'/'+id).set(data); }
+    catch(e){ handleWriteError(e); throw e; }
+  } else lsSave();
+}
+async function remove(coll,id){
+  applyLocal(coll,id,null);
+  if(access.mode==='db'){
+    try{ await db.doc(coll+'/'+id).delete(); }
+    catch(e){ handleWriteError(e); throw e; }
+  } else lsSave();
+}
+function handleWriteError(e){
+  const code=e&&e.code;
+  if(code==='invalid_argument'){ access.canWrite=false; showBanner('You can view this league but not make moves. Ask the commissioner for edit access.'); toast('That move was not saved. You only have view access.','bad'); }
+  else toast('Could not save: '+((e&&e.message)||'unknown error'),'bad');
+  render();
+}
+async function writeMany(ops){
+  // ops: [[coll,id,data|null],...]; different documents, so they can run together
+  await Promise.all(ops.map(([c,i,d])=>d===null?remove(c,i):write(c,i,d)));
+}
+
+async function initLeague(){
+  const d=buildInitialData();
+  const ops=[];
+  Object.values(d.teams).forEach(t=>ops.push(['teams',t.id,t]));
+  Object.values(d.games).forEach(g=>ops.push(['games',g.id,g]));
+  Object.keys(S.claims).forEach(id=>ops.push(['claims',id,null]));
+  Object.keys(S.trades).forEach(id=>ops.push(['trades',id,null]));
+  Object.keys(S.log).forEach(id=>ops.push(['log',id,null]));
+  ops.push(['league','settings',d.settings]);
+  ops.push(['league','waivers',d.waivers]);
+  await writeMany(ops);
+  await addLog('league',null,'League created from the draft results. 12-week schedule generated.');
+  S.ready=true; render();
+}
+
+async function boot(){
+  const useFn=window.claude&&window.claude.use;
+  if(useFn){
+    const [_db,user]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+    if(_db){
+      db=_db; access.mode='db';
+      if(user){
+        access.uid=await user.id();
+        const cw=await user.can('data.write');
+        access.canWrite=cw!==false;
+        access.canAdmin=(await user.canEdit())||(await user.isOwner());
+      } else { access.canWrite=true; access.canAdmin=false; }
+      subscribeDb();
+      return;
+    }
+  }
+  // Browser-only mode
+  access.mode='local'; access.canWrite=true; access.canAdmin=true;
+  const saved=lsLoad();
+  if(saved&&saved.settings){ Object.assign(S,saved); S.ready=true; render(); }
+  else { S.ready=true; await initLeague(); }
+  checkWaivers();
+}
+
+function subscribeDb(){
+  const colls=['teams','games','claims','trades','log'];
+  let pending=colls.length+2;
+  const done=()=>{ if(--pending<=0&&!S.ready){ S.ready=true; } render(); checkWaivers(); };
+  colls.forEach(c=>{
+    let first=true;
+    db.collection(c).onSnapshot(snap=>{
+      const o={}; snap.docs.forEach(d=>{o[d.id]=d.data();}); S[c]=o;
+      if(first){first=false;done();} else {render();checkWaivers();}
+    },err=>{ toast('Live updates stopped ('+err.code+'). Reload to reconnect.','bad'); });
+  });
+  ['settings','waivers'].forEach(k=>{
+    let first=true;
+    db.doc('league/'+k).onSnapshot(snap=>{
+      S[k]=snap.exists?snap.data():null;
+      if(first){first=false;done();} else {render();checkWaivers();}
+    },err=>{ toast('Live updates stopped ('+err.code+').','bad'); });
+  });
+}
+
+/* ---------- Helpers ---------- */
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const team=id=>S.teams[id];
+const teamsList=()=>TEAM_ORDER.map(id=>S.teams[id]).filter(Boolean);
+const akaOf=n=>AKA[n]?'<span class="aka"> (aka '+esc(AKA[n])+')</span>':'';
+const nameHtml=n=>esc(n)+akaOf(n);
+const fmtDate=iso=>{const d=new Date(iso);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});};
+function untilText(iso){const ms=new Date(iso).getTime()-Date.now();if(ms<=0)return 'clearing now';const h=Math.floor(ms/36e5),m=Math.floor((ms%36e5)/6e4);if(h>=24)return Math.floor(h/24)+'d '+(h%24)+'h';return h>0?h+'h '+m+'m':m+'m';}
+function avatar(t,lg){ if(!t) return ''; const init=(t.name||'?').trim()[0].toUpperCase(); return '<span class="avatar'+(lg?' lg':'')+'" style="background:'+esc(t.color||'#777')+'">'+esc(init)+'</span>'; }
+function teamline(id,withMgr){const t=team(id); if(!t) return esc(id); return '<span class="teamline">'+avatar(t)+'<span class="n">'+esc(t.name)+'</span>'+(withMgr?'<span class="m">'+esc(t.manager)+'</span>':'')+'</span>';}
+function rosteredMap(){const m={};teamsList().forEach(t=>{t.roster.forEach(r=>m[r.p]=t.id);if(t.stadium)m[t.stadium]=t.id;});return m;}
+function charCount(t){return t.roster.length;}
+function pendingClaims(){return Object.values(S.claims).filter(c=>c.status==='pending');}
+function pendingTrades(){return Object.values(S.trades).filter(t=>t.status==='pending');}
+function waiverItems(){return (S.waivers&&S.waivers.items)||{};}
+function teamGames(id){return Object.values(S.games).filter(g=>g.home===id||g.away===id).sort((a,b)=>a.week-b.week);}
+function weekGames(w){return Object.values(S.games).filter(g=>g.week===w).sort((a,b)=>a.id<b.id?-1:1);}
+function winnerOf(g){ if(!g.final) return null; return g.hs>g.as?g.home:g.away; }
+
+function standings(){
+  const st={}; TEAM_ORDER.forEach(id=>{ if(team(id)) st[id]={id,w:0,l:0,rs:0,ra:0,res:[],conf:team(id).conf}; });
+  Object.values(S.games).filter(g=>g.final).sort((a,b)=>a.week-b.week).forEach(g=>{
+    const h=st[g.home],a=st[g.away]; if(!h||!a) return;
+    h.rs+=g.hs; h.ra+=g.as; a.rs+=g.as; a.ra+=g.hs;
+    if(g.hs>g.as){h.w++;a.l++;h.res.push('W');a.res.push('L');} else {a.w++;h.l++;a.res.push('W');h.res.push('L');}
+  });
+  const rows=Object.values(st).map(r=>{
+    r.pct=(r.w+r.l)?r.w/(r.w+r.l):0; r.diff=r.rs-r.ra;
+    let n=0,last=r.res[r.res.length-1]; for(let i=r.res.length-1;i>=0&&r.res[i]===last;i--)n++;
+    r.streak=last?last+n:'-';
+    return r;
+  });
+  rows.sort((a,b)=>b.pct-a.pct||b.diff-a.diff||b.rs-a.rs||a.id.localeCompare(b.id));
+  const lead=rows[0];
+  rows.forEach(r=>{ r.gb=lead?((lead.w-r.w)+(r.l-lead.l))/2:0; });
+  return rows;
+}
+function record(id){const r=standings().find(x=>x.id===id);return r?r.w+'-'+r.l:'0-0';}
+
+/* ---------- UI state ---------- */
+const ui={tab:'team',week:null,pf:{status:'available',group:'all',q:''},schedTeam:'all'};
+let acting=null;
+try{acting=localStorage.getItem('mbl-acting');}catch(e){}
+try{const t=localStorage.getItem('mbl-tab'); if(t) ui.tab=t;}catch(e){}
+const TABS=[['team','My Team'],['players','Players'],['matchups','Matchups'],['league','League'],['schedule','Schedule'],['transactions','Transactions'],['draft','Draft']];
+
+function curWeek(){return (S.settings&&S.settings.currentWeek)||1;}
+function viewWeek(){return ui.week||curWeek();}
+
+/* ---------- Rendering ---------- */
+const view=document.getElementById('view');
+function render(){
+  const tabs=document.getElementById('tabs');
+  tabs.innerHTML=TABS.map(([k,l])=>'<button class="tab'+(ui.tab===k?' active':'')+'" data-tab="'+k+'" type="button">'+l+'</button>').join('');
+  document.getElementById('weekpill').textContent='Week '+curWeek();
+  const mp=document.getElementById('modepill');
+  if(access.mode==='local'){mp.hidden=false;mp.textContent='Browser-only copy';} else mp.hidden=true;
+  const sel=document.getElementById('acting');
+  if(!S.ready){ view.innerHTML='<div class="empty">Loading the league…</div>'; return; }
+  if(!S.settings){
+    sel.innerHTML='';
+    view.innerHTML='<div class="setup card"><div class="card-b"><h1>Mario Baseball League</h1><p>The shared league has not been set up yet. Setting it up loads the six drafted rosters and the 12-week schedule.</p>'+(access.canWrite?'<button class="btn primary" data-action="init" type="button">Set up the league from the draft</button>':'<p>Ask the commissioner to open this page and set it up.</p>')+'</div></div>';
+    return;
+  }
+  if(!acting||!team(acting)) acting=TEAM_ORDER[0];
+  sel.innerHTML=teamsList().map(t=>'<option value="'+t.id+'"'+(t.id===acting?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('');
+  const fn={team:vTeam,players:vPlayers,matchups:vMatchups,league:vLeague,schedule:vSchedule,transactions:vTransactions,draft:vDraft}[ui.tab]||vTeam;
+  view.innerHTML=fn();
+}
+function showBanner(msg){const b=document.getElementById('banner');b.textContent=msg;b.hidden=false;}
+function card(title,body,sub,extra){return '<section class="card"><div class="card-h"><h2>'+title+'</h2>'+(sub?'<span class="sub">'+sub+'</span>':'')+(extra?'<span class="spacer"></span>'+extra:'')+'</div>'+body+'</section>';}
+const W=()=>access.canWrite;
+
+function matchupCard(g,editable){
+  const h=team(g.home),a=team(g.away); if(!h||!a) return '';
+  const win=winnerOf(g);
+  const stadium=h.stadium||'No home stadium';
+  const score=g.final||!editable
+    ?'<div class="score"><span>'+(g.as==null?'–':g.as)+'</span><span class="v">@</span><span>'+(g.hs==null?'–':g.hs)+'</span></div>'
+    :'<div class="score"><input type="number" min="0" inputmode="numeric" id="as-'+g.id+'" data-score="as" data-game="'+g.id+'" value="'+(g.as==null?'':g.as)+'" aria-label="Away runs"><span class="v">@</span><input type="number" min="0" inputmode="numeric" id="hs-'+g.id+'" data-score="hs" data-game="'+g.id+'" value="'+(g.hs==null?'':g.hs)+'" aria-label="Home runs"></div>';
+  let foot='<span>'+esc(stadium)+' · '+(g.final?'Final':'Week '+g.week)+'</span>';
+  if(editable){
+    foot+='<span class="btn-row">'+(g.final
+      ?'<button class="btn sm" data-action="unfinal" data-game="'+g.id+'" type="button">Reopen score</button>'
+      :'<button class="btn sm" data-action="savescore" data-game="'+g.id+'" type="button">Save</button><button class="btn sm primary" data-action="final" data-game="'+g.id+'" type="button">Mark final</button>')+'</span>';
+  }
+  return '<section class="card"><div class="matchup">'
+    +'<div class="side'+(win===a.id?' win':'')+'">'+avatar(a,true)+'<span class="n">'+esc(a.name)+'</span><span class="r">'+esc(a.manager)+' · '+record(a.id)+' · Away</span></div>'
+    +score
+    +'<div class="side'+(win===h.id?' win':'')+'">'+avatar(h,true)+'<span class="n">'+esc(h.name)+'</span><span class="r">'+esc(h.manager)+' · '+record(h.id)+' · Home</span></div>'
+    +'</div><div class="matchup-foot">'+foot+'</div></section>';
+}
+
+function vTeam(){
+  const t=team(acting); const st=standings(); const row=st.find(r=>r.id===acting);
+  const confRows=st.filter(r=>r.conf===t.conf); const confRank=confRows.findIndex(r=>r.id===acting)+1;
+  const wo=S.settings.waiverOrder||[]; const prio=wo.indexOf(acting)+1;
+  const head='<section class="card"><div class="card-b teamhead">'+avatar(t,true)+'<div><h1>'+esc(t.name)+'</h1><div class="meta">'+esc(t.manager)+' · '+esc(CONFS[t.conf].name)+(W()?' · <button class="btn sm" data-action="rename" type="button">Rename team</button>':'')+'</div></div>'
+    +'<div class="stats"><div class="stat"><b>'+(row?row.w+'-'+row.l:'0-0')+'</b><span>Record</span></div><div class="stat"><b>'+confRank+'<small style="font-size:12px">/'+confRows.length+'</small></b><span>Conf rank</span></div><div class="stat"><b>'+(row?(row.diff>0?'+':'')+row.diff:'0')+'</b><span>Run diff</span></div><div class="stat"><b>'+(prio||'-')+'</b><span>Waiver #</span></div></div></div></section>';
+
+  const g=weekGames(viewWeek()).find(x=>x.home===acting||x.away===acting);
+  const thisWeek=g?card('Week '+viewWeek()+' matchup',matchupCard(g,false).replace('<section class="card">','<div>').replace(/<\/section>$/,'</div>')):'';
+
+  const slotOpts=cur=>[...POS,'BN'].map(p=>'<option value="'+p+'"'+(p===cur?' selected':'')+'>'+p+'</option>').join('');
+  const rowHtml=(r,slot)=>{
+    if(!r) return '<tr class="empty"><td><span class="slot">'+slot+'</span></td><td colspan="3">Empty – move a bench player here</td><td></td></tr>';
+    const c=CHAR[r.p]||{group:'?'};
+    return '<tr><td>'+(W()?'<select class="slotsel" id="slot-'+r.p.replace(/\W/g,'_')+'" data-slotsel="'+esc(r.p)+'" aria-label="Lineup slot">'+slotOpts(r.slot)+'</select>':'<span class="slot'+(r.slot==='BN'?' bn':'')+'">'+r.slot+'</span>')+'</td>'
+      +'<td>'+nameHtml(r.p)+(t.captain===r.p?'<span class="cap">CAPTAIN</span>':'')+'</td><td class="aka">'+esc(c.group)+'</td>'
+      +'<td>'+(c.cap&&W()&&t.captain!==r.p?'<button class="btn sm" data-action="captain" data-p="'+esc(r.p)+'" type="button">Make captain</button>':(c.cap?'<span class="aka">Captain eligible</span>':''))+'</td>'
+      +'<td class="num">'+(W()?'<button class="btn sm bad" data-action="drop" data-p="'+esc(r.p)+'" type="button">Drop</button>':'')+'</td></tr>';
+  };
+  const starters=POS.map(p=>rowHtml(t.roster.find(r=>r.slot===p),p)).join('');
+  const bench=t.roster.filter(r=>r.slot==='BN').map(r=>rowHtml(r,'BN')).join('');
+  const lineup=card('Lineup','<div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Player</th><th>Group</th><th>Captain</th><th class="num">Action</th></tr></thead><tbody>'+starters+'<tr><th colspan="5">Bench</th></tr>'+(bench||'<tr class="empty"><td colspan="5">Bench is empty</td></tr>')+'</tbody></table></div>',
+    charCount(t)+' / '+MAX_CHARS+' characters');
+
+  const stadium=card('Home stadium','<div class="card-b" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+(t.stadium?'<span class="tag std">'+esc(t.stadium)+'</span><span class="help">Home games are played here.</span>'+(W()?'<span class="spacer"></span><button class="btn sm bad" data-action="drop" data-p="'+esc(t.stadium)+'" type="button">Drop</button>':''):'<span class="help">No stadium. Pick one up on the Players tab.</span>')+'</div>');
+
+  const myClaims=pendingClaims().filter(c=>c.team===acting);
+  const claims=card('Pending waiver claims',myClaims.length?'<ul class="list">'+myClaims.map(c=>'<li><span class="txt">Claim <b>'+nameHtml(c.add)+'</b>'+(c.drop?' and drop '+nameHtml(c.drop):'')+'</span><span class="aka">'+(waiverItems()[c.add]?'clears in '+untilText(waiverItems()[c.add].clearsAt):'')+'</span>'+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+c.id+'" type="button">Cancel</button>':'')+'</li>').join('')+'</ul>':'<div class="empty">No pending claims.</div>');
+
+  const sched=card('Schedule','<ul class="list">'+teamGames(acting).map(x=>{const opp=x.home===acting?x.away:x.home;const home=x.home===acting;const w=winnerOf(x);const res=x.final?(w===acting?'<span class="streak w">W</span>':'<span class="streak l">L</span>')+' '+(home?x.hs+'-'+x.as:x.as+'-'+x.hs):'';return '<li'+(x.week===curWeek()?' style="background:var(--brand-soft)"':'')+'><span class="when">Week '+x.week+'</span><span class="txt">'+(home?'vs':'@')+' '+teamline(opp)+'</span><span>'+res+'</span></li>';}).join('')+'</ul>');
+
+  return '<div class="stack">'+head+'<div class="grid"><div class="stack">'+lineup+stadium+'</div><div class="stack">'+thisWeek+claims+sched+'</div></div></div>';
+}
+
+function vPlayers(){
+  const rm=rosteredMap(); const wv=waiverItems(); const t=team(acting);
+  const groups=[...new Set(ALL_NAMES.map(n=>CHAR[n].group))];
+  const f=ui.pf; const q=f.q.trim().toLowerCase();
+  const rows=ALL_NAMES.filter(n=>{
+    const c=CHAR[n]; const owner=rm[n]; const onW=!!wv[n];
+    if(f.status==='available'&&(owner||onW)) return false;
+    if(f.status==='waivers'&&!onW) return false;
+    if(f.status==='fa_wv'&&owner) return false;
+    if(f.status.startsWith('team:')&&owner!==f.status.slice(5)) return false;
+    if(f.group!=='all'&&c.group!==f.group) return false;
+    if(q&&!(n.toLowerCase().includes(q)||(AKA[n]||'').toLowerCase().includes(q))) return false;
+    return true;
+  }).sort((a,b)=>{const ta=CHAR[a].type==='stadium'?1:0,tb=CHAR[b].type==='stadium'?1:0;return ta-tb||a.localeCompare(b);});
+  const myClaimFor=n=>pendingClaims().find(c=>c.team===acting&&c.add===n);
+  const body=rows.map(n=>{
+    const c=CHAR[n]; const owner=rm[n]; const w=wv[n];
+    let status,action='';
+    if(owner){ status=teamline(owner); if(W()&&owner===acting) action='<button class="btn sm bad" data-action="drop" data-p="'+esc(n)+'" type="button">Drop</button>'; else if(W()) action='<button class="btn sm" data-action="tradefor" data-p="'+esc(n)+'" data-team="'+owner+'" type="button">Trade for</button>'; }
+    else if(w){ status='<span class="tag wv">Waivers · '+untilText(w.clearsAt)+'</span>'; const mc=myClaimFor(n); action=mc?'<span class="aka">Claim pending</span> '+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+mc.id+'" type="button">Cancel</button>':''):(W()?'<button class="btn sm primary" data-action="claim" data-p="'+esc(n)+'" type="button">Claim</button>':''); }
+    else { status='<span class="tag fa">Free agent</span>'; if(W()) action='<button class="btn sm good" data-action="add" data-p="'+esc(n)+'" type="button">Add</button>'; }
+    return '<tr><td>'+nameHtml(n)+(c.cap?'<span class="cap">C</span>':'')+'</td><td class="aka">'+(c.type==='stadium'?'<span class="tag std">Stadium</span>':esc(c.group))+'</td><td>'+status+'</td><td class="num">'+action+'</td></tr>';
+  }).join('');
+  const filters='<div class="filters"><select id="pf-status" data-filter="status">'
+    +[['available','Available (free agents)'],['waivers','On waivers'],['fa_wv','Free agents + waivers'],['all','All players'],...teamsList().map(x=>['team:'+x.id,x.name+' roster'])].map(([v,l])=>'<option value="'+v+'"'+(f.status===v?' selected':'')+'>'+esc(l)+'</option>').join('')
+    +'</select><select id="pf-group" data-filter="group"><option value="all">All groups</option>'+groups.map(g=>'<option value="'+esc(g)+'"'+(f.group===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select>'
+    +'<input id="pf-q" data-filter="q" type="search" placeholder="Search players" value="'+esc(f.q)+'"></div>';
+  const table=card('Players',filters+'<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>Group</th><th>Status</th><th class="num">Action</th></tr></thead><tbody>'+(body||'<tr><td colspan="4" class="empty">No players match.</td></tr>')+'</tbody></table></div>',rows.length+' shown');
+
+  const wo=S.settings.waiverOrder||[];
+  const prio=card('Waiver priority','<ol class="prio list">'+wo.map((id,i)=>'<li'+(id===acting?' style="background:var(--brand-soft)"':'')+'><span class="num">'+(i+1)+'</span>'+teamline(id)+'</li>').join('')+'</ol><div class="card-b help">Dropped players sit on waivers for '+S.settings.waiverDays+' day'+(S.settings.waiverDays===1?'':'s')+'. When they clear, the claiming team with the best priority gets them and moves to the bottom. Unclaimed players become free agents.</div>');
+  const pc=pendingClaims();
+  const claims=card('All pending claims',pc.length?'<ul class="list">'+pc.map(c=>'<li><span class="txt">'+teamline(c.team)+'</span><span>'+nameHtml(c.add)+(c.drop?' <span class="aka">drop '+esc(c.drop)+'</span>':'')+'</span></li>').join('')+'</ul>':'<div class="empty">Nobody has a claim in.</div>');
+  const onW=Object.entries(wv).sort((a,b)=>a[1].clearsAt<b[1].clearsAt?-1:1);
+  const wire=card('Waiver wire',onW.length?'<ul class="list">'+onW.map(([n,w])=>'<li><span class="txt">'+nameHtml(n)+'</span><span class="aka">clears '+fmtDate(w.clearsAt)+'</span></li>').join('')+'</ul>':'<div class="empty">The wire is empty.</div>');
+  return '<div class="grid"><div class="stack">'+table+'</div><div class="stack">'+wire+claims+prio+'</div></div>';
+}
+
+function vMatchups(){
+  const w=viewWeek();
+  const nav='<div class="card"><div class="card-h"><div class="weeknav"><button class="btn sm" data-action="week" data-d="-1" type="button"'+(w<=1?' disabled':'')+'>‹</button><b>Week '+w+'</b><button class="btn sm" data-action="week" data-d="1" type="button"'+(w>=WEEKS?' disabled':'')+'>›</button>'+(w!==curWeek()?'<button class="btn sm" data-action="week" data-d="0" type="button">Current</button>':'')+'</div><span class="spacer"></span><span class="sub">'+(W()?'Enter the final score of each Super Sluggers game, then mark it final.':'Scores are entered by the managers.')+'</span></div></div>';
+  const games=weekGames(w).map(g=>matchupCard(g,W())).join('');
+  return '<div class="stack">'+nav+games+'</div>';
+}
+
+function standingsTable(rows,showConf){
+  return '<div class="tbl-wrap"><table><thead><tr><th>#</th><th>Team</th><th class="num">W</th><th class="num">L</th><th class="num">PCT</th><th class="num">GB</th><th class="num">RS</th><th class="num">RA</th><th class="num">Diff</th><th class="num">Strk</th></tr></thead><tbody>'
+    +rows.map((r,i)=>'<tr'+(r.id===acting?' class="me"':'')+'><td class="num">'+(i+1)+'</td><td>'+teamline(r.id,true)+(showConf?' <span class="tag">'+esc(CONFS[r.conf].name)+'</span>':'')+'</td><td class="num">'+r.w+'</td><td class="num">'+r.l+'</td><td class="num">'+r.pct.toFixed(3).replace(/^0/,'')+'</td><td class="num">'+(r.gb?r.gb:'-')+'</td><td class="num">'+r.rs+'</td><td class="num">'+r.ra+'</td><td class="num">'+(r.diff>0?'+':'')+r.diff+'</td><td class="num"><span class="streak '+(r.streak[0]||'').toLowerCase()+'">'+r.streak+'</span></td></tr>').join('')
+    +'</tbody></table></div>';
+}
+function vLeague(){
+  const st=standings();
+  const confs=['A','N'].map(c=>{const rows=st.filter(r=>r.conf===c);rows.forEach((r,i)=>{r.gb=((rows[0].w-r.w)+(r.l-rows[0].l))/2;});return '<div class="conf-title">'+esc(CONFS[c].name)+'<span class="tag">'+rows.map(r=>esc(r.id)).length+' teams</span></div>'+standingsTable(rows,false);}).join('');
+  st.forEach(r=>{r.gb=((st[0].w-r.w)+(r.l-st[0].l))/2;});
+  const stand=card('Standings','<div class="card-b flush">'+confs+'<div class="conf-title">Overall</div>'+standingsTable(st,true)+'</div>','Through week '+curWeek());
+
+  const wk=weekGames(curWeek());
+  const thisWeek=card('This week',wk.length?'<ul class="list">'+wk.map(g=>'<li><span class="txt vs-strip" style="padding:0">'+teamline(g.away)+'<span class="vs">@</span>'+teamline(g.home)+'</span><span class="aka">'+(g.final?'Final '+g.as+'-'+g.hs:esc(team(g.home).stadium||''))+'</span></li>').join('')+'</ul>':'<div class="empty">No games.</div>','Week '+curWeek());
+
+  let commish='';
+  if(W()){
+    const wo=S.settings.waiverOrder||[];
+    commish=card('Commissioner tools','<div class="card-b form">'
+      +'<div class="btn-row"><span class="eyebrow">Current week</span><button class="btn sm" data-action="setweek" data-d="-1" type="button"'+(curWeek()<=1?' disabled':'')+'>‹</button><b>Week '+curWeek()+'</b><button class="btn sm" data-action="setweek" data-d="1" type="button"'+(curWeek()>=WEEKS?' disabled':'')+'>›</button></div>'
+      +'<label>Waiver period (days)<select id="waiverdays" data-setting="waiverDays">'+[1,2,3,4,5,7].map(d=>'<option value="'+d+'"'+(S.settings.waiverDays===d?' selected':'')+'>'+d+'</option>').join('')+'</select></label>'
+      +'<div><span class="eyebrow">Waiver order</span><ol class="prio list" style="margin-top:6px;border:1px solid var(--line);border-radius:8px">'+wo.map((id,i)=>'<li><span class="num">'+(i+1)+'</span>'+teamline(id)+'<span class="spacer"></span><button class="btn sm" data-action="wo" data-id="'+id+'" data-d="-1" type="button"'+(i===0?' disabled':'')+'>↑</button><button class="btn sm" data-action="wo" data-id="'+id+'" data-d="1" type="button"'+(i===wo.length-1?' disabled':'')+'>↓</button></li>').join('')+'</ol></div>'
+      +(access.canAdmin?'<div><span class="eyebrow">Danger zone</span><div class="btn-row" style="margin-top:6px"><button class="btn sm bad" data-action="resetask" type="button">Reset league to draft day</button></div></div>':'')
+      +'</div>');
+  }
+  const info=card('League format','<div class="card-b help"><p style="margin-top:0">Six managers in two conferences. Every team plays its two conference rivals three times and the three teams in the other conference twice: 12 games over 12 weeks, one head-to-head Super Sluggers game a week.</p><p>Rosters hold '+MAX_CHARS+' characters (9 starters, 3 bench) and one home stadium. The home team\'s stadium hosts the game.</p><p style="margin-bottom:0">Conferences: <b>'+esc(CONFS.A.name)+'</b> (Connor, Nolan, Stefano) and <b>'+esc(CONFS.N.name)+'</b> (Matas, James, Brodie).</p></div>');
+  return '<div class="grid"><div class="stack">'+stand+'</div><div class="stack">'+thisWeek+commish+info+'</div></div>';
+}
+
+function vSchedule(){
+  const f=ui.schedTeam;
+  const filt='<div class="filters"><select id="sched-team" data-schedteam><option value="all">All teams</option>'+teamsList().map(t=>'<option value="'+t.id+'"'+(f===t.id?' selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>';
+  const rows=[]; for(let w=1;w<=WEEKS;w++){
+    const gs=weekGames(w).filter(g=>f==='all'||g.home===f||g.away===f);
+    rows.push('<tr'+(w===curWeek()?' class="me"':'')+'><td class="wk">'+w+'</td><td><div style="display:flex;flex-direction:column;gap:6px">'+gs.map(g=>'<div class="g">'+teamline(g.away)+'<span class="at">@</span>'+teamline(g.home)+(g.final?'<span class="res">'+g.as+'-'+g.hs+'</span>':'')+'</div>').join('')+'</div></td><td class="aka">'+gs.map(g=>esc(team(g.home).stadium||'TBD')).join('<br>')+'</td></tr>');
+  }
+  return card('Schedule',filt+'<div class="sched-wrap"><table class="sched"><thead><tr><th>Wk</th><th>Games (away @ home)</th><th>Stadium</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>','12 weeks · 36 games');
+}
+
+function vTransactions(){
+  const logs=Object.values(S.log).sort((a,b)=>b.ts<a.ts?-1:1);
+  const log=card('Transaction log',logs.length?'<ul class="list">'+logs.map(l=>'<li><span class="when">'+fmtDate(l.ts)+'</span><span class="kind '+esc(l.type)+'">'+esc(l.type)+'</span><span class="txt">'+(l.team&&team(l.team)?teamline(l.team)+' ':'')+esc(l.text)+'</span></li>').join('')+'</ul>':'<div class="empty">No transactions yet.</div>');
+
+  const pt=pendingTrades();
+  const trades=card('Trade proposals',pt.length?'<ul class="list">'+pt.map(tr=>'<li><span class="txt">'+teamline(tr.from)+' sends <b>'+tr.give.map(esc).join(', ')+'</b> to '+teamline(tr.to)+' for <b>'+tr.get.map(esc).join(', ')+'</b></span>'
+    +(W()?'<span class="btn-row">'+(acting===tr.to?'<button class="btn sm good" data-action="tradeaccept" data-id="'+tr.id+'" type="button">Accept</button><button class="btn sm bad" data-action="tradereject" data-id="'+tr.id+'" type="button">Reject</button>':'')+(acting===tr.from?'<button class="btn sm" data-action="tradecancel" data-id="'+tr.id+'" type="button">Withdraw</button>':'')+'</span>':'')+'</li>').join('')+'</ul>':'<div class="empty">No open trades.</div>',null,W()?'<button class="btn sm primary" data-action="tradenew" type="button">Propose a trade</button>':'');
+  return '<div class="grid"><div class="stack">'+log+'</div><div class="stack">'+trades+'</div></div>';
+}
+
+function vDraft(){
+  const head='<tr><th class="rd">Rd</th>'+TEAM_ORDER.map(id=>'<th>'+esc(DRAFT[id].name)+'<br><span class="aka">'+esc(DRAFT[id].manager)+' · '+esc(CONFS[DRAFT[id].conf].name)+'</span></th>').join('')+'</tr>';
+  const rows=[]; for(let r=0;r<12;r++) rows.push('<tr><td class="rd">'+(r+1)+'</td>'+TEAM_ORDER.map(id=>{const p=DRAFT[id].picks[r];return '<td'+(isStadium(p)?' class="std"':'')+'>'+nameHtml(p)+'</td>';}).join('')+'</tr>');
+  rows.push('<tr class="udfa"><td class="rd">UDFA</td>'+TEAM_ORDER.map(id=>'<td>'+nameHtml(DRAFT[id].udfa)+'</td>').join('')+'</tr>');
+  return card('Draft results','<div class="tbl-wrap"><table class="draft"><thead>'+head+'</thead><tbody>'+rows.join('')+'</tbody></table></div><div class="card-b help">Stadium picks are in purple. The red row is each team\'s undrafted free agent signing. Every one of the 72 Super Sluggers characters was taken, so the free-agent pool starts with only the three undrafted stadiums: Peach Ice Garden, Daisy Cruiser and Yoshi Park.</div>','As drafted');
+}
+
+/* ---------- Modals & toasts ---------- */
+function openModal(title,body){document.getElementById('modal-root').innerHTML='<div class="modal-bg" data-close><div class="modal card"><div class="card-h"><h2>'+title+'</h2><span class="spacer"></span><button class="btn sm" data-close type="button">Close</button></div><div class="card-b">'+body+'</div></div></div>';}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+let toastTimer=null;
+function toast(msg,kind){const r=document.getElementById('toast-root');r.innerHTML='<div class="toast'+(kind?' '+kind:'')+'">'+esc(msg)+'</div>';clearTimeout(toastTimer);toastTimer=setTimeout(()=>{r.innerHTML='';},3200);}
+
+/* ---------- Actions ---------- */
+function newId(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
+async function addLog(type,teamId,text){const id=newId();await write('log',id,{id,type,team:teamId,text,ts:new Date().toISOString(),week:curWeek()});}
+
+function cloneTeam(id){return JSON.parse(JSON.stringify(team(id)));}
+function removeFromTeam(t,name){ if(t.stadium===name){t.stadium=null;return true;} const i=t.roster.findIndex(r=>r.p===name); if(i<0) return false; t.roster.splice(i,1); if(t.captain===name) t.captain=null; return true; }
+function addToTeam(t,name){ if(isStadium(name)){ if(t.stadium) return 'Already has a stadium'; t.stadium=name; return null; } if(t.roster.length>=MAX_CHARS) return 'Roster is full'; t.roster.push({p:name,slot:'BN'}); return null; }
+function canAcquire(t,name,drop){ const c=JSON.parse(JSON.stringify(t)); if(drop){ if(!removeFromTeam(c,drop)) return 'Drop player is not on the roster'; } return addToTeam(c,name); }
+function dropNeeded(t,name){ return isStadium(name)?!!t.stadium:t.roster.length>=MAX_CHARS; }
+function dropOptions(t,name){ return isStadium(name)?(t.stadium?[t.stadium]:[]):t.roster.map(r=>r.p); }
+
+async function putOnWaivers(name,byTeam,wv){ const days=S.settings.waiverDays||2; wv.items[name]={clearsAt:new Date(Date.now()+days*864e5).toISOString(),droppedBy:byTeam,droppedAt:new Date().toISOString()}; }
+
+async function doDrop(name){
+  const t=cloneTeam(acting); if(!removeFromTeam(t,name)) return;
+  const wv=JSON.parse(JSON.stringify(S.waivers||{items:{}})); await putOnWaivers(name,acting,wv);
+  await writeMany([['teams',acting,t],['league','waivers',wv]]);
+  await addLog('drop',acting,'dropped '+name+(AKA[name]?' ('+AKA[name]+')':'')+'. On waivers for '+S.settings.waiverDays+' day(s).');
+  closeModal(); toast(name+' dropped'); render();
+}
+async function doAdd(name,drop){
+  const t=cloneTeam(acting);
+  const rm=rosteredMap(); if(rm[name]||waiverItems()[name]){toast(name+' is no longer a free agent','bad');return;}
+  const err=canAcquire(t,name,drop); if(err){toast(err,'bad');return;}
+  const ops=[]; const wv=JSON.parse(JSON.stringify(S.waivers||{items:{}}));
+  if(drop){ removeFromTeam(t,drop); await putOnWaivers(drop,acting,wv); ops.push(['league','waivers',wv]); }
+  addToTeam(t,name); ops.push(['teams',acting,t]);
+  await writeMany(ops);
+  await addLog('add',acting,'added '+name+(drop?' and dropped '+drop:'')+' (free agent).');
+  closeModal(); toast(name+' added'); render();
+}
+async function doClaim(name,drop){
+  const t=team(acting); const err=canAcquire(t,name,drop); if(err){toast(err,'bad');return;}
+  const id=newId();
+  await write('claims',id,{id,team:acting,add:name,drop:drop||null,status:'pending',createdAt:new Date().toISOString()});
+  closeModal(); toast('Claim submitted for '+name); render();
+}
+function askAcquire(name,mode){
+  const t=team(acting); const need=dropNeeded(t,name); const opts=dropOptions(t,name);
+  const verb=mode==='claim'?'Claim':'Add';
+  const w=waiverItems()[name];
+  openModal(verb+' '+esc(name),'<div class="form">'
+    +(w?'<div class="notice">On waivers until '+fmtDate(w.clearsAt)+'. Claims are processed in waiver-priority order when it clears.</div>':'')
+    +'<label>'+(need?'You must drop someone to make room':'Drop a player too? (optional)')+'<select id="dropsel"><option value="">'+(need?'Choose a player to drop':'No drop')+'</option>'+opts.map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('')+'</select></label>'
+    +'<div class="btn-row"><button class="btn primary" data-action="confirm'+mode+'" data-p="'+esc(name)+'" data-need="'+(need?'1':'')+'" type="button">'+verb+' '+esc(name)+'</button><button class="btn" data-close type="button">Cancel</button></div></div>');
+}
+async function cancelClaim(id){ const c=S.claims[id]; if(!c) return; await remove('claims',id); toast('Claim cancelled'); render(); }
+
+async function setSlot(name,slot){
+  const t=cloneTeam(acting); const r=t.roster.find(x=>x.p===name); if(!r) return;
+  if(slot!=='BN'){ const other=t.roster.find(x=>x.slot===slot&&x.p!==name); if(other) other.slot=r.slot; }
+  r.slot=slot; await write('teams',acting,t); render();
+}
+async function setCaptain(name){ const t=cloneTeam(acting); t.captain=name; await write('teams',acting,t); await addLog('lineup',acting,'named '+name+' team captain.'); render(); }
+async function renameTeam(){ const t=team(acting); openModal('Rename team','<div class="form"><label>Team name<input id="rename-in" maxlength="40" value="'+esc(t.name)+'"></label><div class="btn-row"><button class="btn primary" data-action="renameok" type="button">Save</button><button class="btn" data-close type="button">Cancel</button></div></div>'); }
+
+async function saveScore(gid,final){
+  const g=JSON.parse(JSON.stringify(S.games[gid])); if(!g) return;
+  const as=document.getElementById('as-'+gid), hs=document.getElementById('hs-'+gid);
+  const a=as.value===''?null:Number(as.value), h=hs.value===''?null:Number(hs.value);
+  if(final){ if(a==null||h==null){toast('Enter both scores first','bad');return;} if(a===h){toast('Super Sluggers games cannot end tied','bad');return;} }
+  g.as=a; g.hs=h; g.final=!!final;
+  await write('games',gid,g);
+  if(final){ const w=winnerOf(g); const l=w===g.home?g.away:g.home; await addLog('score',null,'Week '+g.week+': '+team(w).name+' beat '+team(l).name+' '+Math.max(a,h)+'-'+Math.min(a,h)+' at '+(team(g.home).stadium||'an unnamed park')+'.'); }
+  toast(final?'Game marked final':'Score saved'); render();
+}
+async function unfinal(gid){ const g=JSON.parse(JSON.stringify(S.games[gid])); g.final=false; await write('games',gid,g); render(); }
+async function setWeek(d){ const s=JSON.parse(JSON.stringify(S.settings)); s.currentWeek=Math.min(WEEKS,Math.max(1,s.currentWeek+d)); ui.week=null; await write('league','settings',s); render(); }
+async function moveWaiverOrder(id,d){ const s=JSON.parse(JSON.stringify(S.settings)); const i=s.waiverOrder.indexOf(id); const j=i+d; if(i<0||j<0||j>=s.waiverOrder.length) return; [s.waiverOrder[i],s.waiverOrder[j]]=[s.waiverOrder[j],s.waiverOrder[i]]; await write('league','settings',s); render(); }
+async function setSetting(k,v){ const s=JSON.parse(JSON.stringify(S.settings)); s[k]=v; await write('league','settings',s); render(); }
+
+/* Trades */
+function tradeModal(partnerId,wantName){
+  const me=team(acting); const partners=teamsList().filter(t=>t.id!==acting);
+  const p=team(partnerId)||partners[0];
+  const items=t=>[...t.roster.map(r=>r.p),...(t.stadium?[t.stadium]:[])];
+  openModal('Propose a trade','<div class="form">'
+    +'<label>Trade partner<select id="trade-partner" data-tradepartner>'+partners.map(t=>'<option value="'+t.id+'"'+(t.id===p.id?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+'</select></label>'
+    +'<div class="two"><div><span class="eyebrow">You send</span><div class="checks">'+items(me).map(n=>'<label><input type="checkbox" name="give" value="'+esc(n)+'">'+esc(n)+'</label>').join('')+'</div></div>'
+    +'<div><span class="eyebrow">You get</span><div class="checks">'+items(p).map(n=>'<label><input type="checkbox" name="get" value="'+esc(n)+'"'+(n===wantName?' checked':'')+'>'+esc(n)+'</label>').join('')+'</div></div></div>'
+    +'<div class="help">Both rosters must stay at or under '+MAX_CHARS+' characters and one stadium after the trade. The other manager accepts or rejects it on the Transactions tab.</div>'
+    +'<div class="btn-row"><button class="btn primary" data-action="tradesend" type="button">Send proposal</button><button class="btn" data-close type="button">Cancel</button></div></div>');
+}
+function applyTrade(tr){
+  const a=cloneTeam(tr.from), b=cloneTeam(tr.to);
+  for(const n of tr.give){ if(!removeFromTeam(a,n)) return {err:tr.give.length&&n+' is no longer on '+a.name}; }
+  for(const n of tr.get){ if(!removeFromTeam(b,n)) return {err:n+' is no longer on '+b.name}; }
+  for(const n of tr.give){ const e=addToTeam(b,n); if(e) return {err:b.name+': '+e}; }
+  for(const n of tr.get){ const e=addToTeam(a,n); if(e) return {err:a.name+': '+e}; }
+  return {a,b};
+}
+async function sendTrade(){
+  const to=document.getElementById('trade-partner').value;
+  const give=[...document.querySelectorAll('input[name=give]:checked')].map(i=>i.value);
+  const get=[...document.querySelectorAll('input[name=get]:checked')].map(i=>i.value);
+  if(!give.length&&!get.length){toast('Pick at least one player','bad');return;}
+  const tr={id:newId(),from:acting,to,give,get,status:'pending',createdAt:new Date().toISOString()};
+  const chk=applyTrade(tr); if(chk.err){toast(chk.err,'bad');return;}
+  await write('trades',tr.id,tr);
+  await addLog('trade',acting,'proposed a trade to '+team(to).name+': '+(give.join(', ')||'nothing')+' for '+(get.join(', ')||'nothing')+'.');
+  closeModal(); toast('Trade proposed'); render();
+}
+async function resolveTrade(id,status){
+  const tr=JSON.parse(JSON.stringify(S.trades[id])); if(!tr) return;
+  if(status==='accepted'){
+    const res=applyTrade(tr); if(res.err){toast('Trade failed: '+res.err,'bad');return;}
+    tr.status='accepted'; tr.resolvedAt=new Date().toISOString();
+    await writeMany([['teams',res.a.id,res.a],['teams',res.b.id,res.b],['trades',id,tr]]);
+    await addLog('trade',tr.to,'accepted a trade with '+team(tr.from).name+': '+team(tr.from).name+' sends '+(tr.give.join(', ')||'nothing')+' for '+(tr.get.join(', ')||'nothing')+'.');
+    toast('Trade completed');
+  } else {
+    await remove('trades',id);
+    await addLog('trade',status==='rejected'?tr.to:tr.from,(status==='rejected'?'rejected':'withdrew')+' the trade with '+team(status==='rejected'?tr.from:tr.to).name+'.');
+    toast(status==='rejected'?'Trade rejected':'Trade withdrawn');
+  }
+  render();
+}
+
+/* Waiver processing: runs when a waiver period has expired. */
+let processing=false;
+async function checkWaivers(){
+  if(processing||!S.ready||!S.settings||!S.waivers||!access.canWrite) return;
+  const now=Date.now(); const items=waiverItems();
+  const cleared=Object.entries(items).filter(([n,w])=>new Date(w.clearsAt).getTime()<=now).sort((a,b)=>a[1].clearsAt<b[1].clearsAt?-1:1);
+  if(!cleared.length) return;
+  processing=true;
+  try{
+    if(access.mode==='db'){ const lease=await db.doc('league/waivers').acquire({holder:TAB_ID,ttlMs:20000}); if(!lease.acquired) return; }
+    const order=[...(S.settings.waiverOrder||TEAM_ORDER)];
+    const teams={}; TEAM_ORDER.forEach(id=>{ if(team(id)) teams[id]=cloneTeam(id); });
+    const wv=JSON.parse(JSON.stringify(S.waivers)); const claimOps=[]; const logs=[]; const touched=new Set();
+    for(const [name] of cleared){
+      delete wv.items[name];
+      const cs=pendingClaims().filter(c=>c.add===name).sort((a,b)=>order.indexOf(a.team)-order.indexOf(b.team));
+      let winner=null;
+      for(const c of cs){
+        const t=teams[c.team]; if(!t) continue;
+        const err=winner?'Lost to a higher priority claim':canAcquire(t,name,c.drop);
+        if(!err){ winner=c; continue; }
+        claimOps.push(['claims',c.id,Object.assign({},c,{status:'lost',reason:err,resolvedAt:new Date().toISOString()})]);
+      }
+      if(winner){
+        const t=teams[winner.team];
+        if(winner.drop){ removeFromTeam(t,winner.drop); wv.items[winner.drop]={clearsAt:new Date(now+(S.settings.waiverDays||2)*864e5).toISOString(),droppedBy:winner.team,droppedAt:new Date(now).toISOString()}; }
+        addToTeam(t,name); touched.add(winner.team);
+        order.splice(order.indexOf(winner.team),1); order.push(winner.team);
+        claimOps.push(['claims',winner.id,Object.assign({},winner,{status:'won',resolvedAt:new Date().toISOString()})]);
+        logs.push(['waiver',winner.team,'won '+name+' off waivers'+(winner.drop?' and dropped '+winner.drop:'')+(cs.length>1?' ('+(cs.length-1)+' other claim'+(cs.length>2?'s':'')+' lost)':'')+'.']);
+      } else {
+        logs.push(['waiver',null,name+' cleared waivers unclaimed and is a free agent.']);
+      }
+    }
+    const s=JSON.parse(JSON.stringify(S.settings)); s.waiverOrder=order;
+    const ops=[['league','waivers',wv],['league','settings',s],...claimOps]; touched.forEach(id=>ops.push(['teams',id,teams[id]]));
+    await writeMany(ops);
+    for(const l of logs) await addLog(...l);
+    // prune resolved claims older than 14 days
+    const old=Object.values(S.claims).filter(c=>c.status!=='pending'&&c.resolvedAt&&Date.now()-new Date(c.resolvedAt).getTime()>14*864e5);
+    for(const c of old) await remove('claims',c.id);
+    toast('Waivers processed'); render();
+  } catch(e){ console.error(e); }
+  finally{ processing=false; }
+}
+setInterval(checkWaivers,60000);
+
+/* ---------- Events ---------- */
+document.getElementById('acting').addEventListener('change',e=>{acting=e.target.value;try{localStorage.setItem('mbl-acting',acting);}catch(x){}render();});
+document.getElementById('app').addEventListener('click',async e=>{
+  const tab=e.target.closest('[data-tab]'); if(tab){ui.tab=tab.dataset.tab;try{localStorage.setItem('mbl-tab',ui.tab);}catch(x){}render();return;}
+  const closeEl=e.target.closest('[data-close]');
+  if(closeEl){ if(!closeEl.classList.contains('modal-bg')){closeModal();return;} if(e.target===closeEl){closeModal();return;} }
+  const el=e.target.closest('[data-action]'); if(!el) return;
+  const a=el.dataset.action, p=el.dataset.p;
+  try{
+    switch(a){
+      case 'init': await initLeague(); break;
+      case 'drop': {const t=team(acting); const inLineup=t.roster.find(r=>r.p===p);
+        openModal('Drop '+esc(p)+'?','<div class="form"><p style="margin:0">'+esc(p)+' goes on waivers for '+S.settings.waiverDays+' day'+(S.settings.waiverDays===1?'':'s')+'. Other teams can claim them before they become a free agent.'+(inLineup&&inLineup.slot!=='BN'?' Your '+inLineup.slot+' slot will be empty.':'')+'</p><div class="btn-row"><button class="btn bad" data-action="confirmdrop" data-p="'+esc(p)+'" type="button">Drop '+esc(p)+'</button><button class="btn" data-close type="button">Keep</button></div></div>'); break;}
+      case 'confirmdrop': await doDrop(p); break;
+      case 'add': askAcquire(p,'add'); break;
+      case 'claim': askAcquire(p,'claim'); break;
+      case 'confirmadd': case 'confirmclaim': {const d=document.getElementById('dropsel').value; if(el.dataset.need&&!d){toast('Choose a player to drop','bad');return;} if(a==='confirmadd') await doAdd(p,d||null); else await doClaim(p,d||null); break;}
+      case 'cancelclaim': await cancelClaim(el.dataset.id); break;
+      case 'captain': await setCaptain(p); break;
+      case 'rename': renameTeam(); break;
+      case 'renameok': {const v=document.getElementById('rename-in').value.trim(); if(!v){toast('Enter a name','bad');return;} const t=cloneTeam(acting); const old=t.name; t.name=v; await write('teams',acting,t); await addLog('league',acting,'renamed the team from '+old+' to '+v+'.'); closeModal(); render(); break;}
+      case 'savescore': await saveScore(el.dataset.game,false); break;
+      case 'final': await saveScore(el.dataset.game,true); break;
+      case 'unfinal': await unfinal(el.dataset.game); break;
+      case 'week': {const d=Number(el.dataset.d); ui.week=d===0?null:Math.min(WEEKS,Math.max(1,viewWeek()+d)); render(); break;}
+      case 'setweek': await setWeek(Number(el.dataset.d)); break;
+      case 'wo': await moveWaiverOrder(el.dataset.id,Number(el.dataset.d)); break;
+      case 'resetask': openModal('Reset the league?','<div class="form"><p style="margin:0">This wipes every score, transaction, claim and trade and restores the drafted rosters. It cannot be undone.</p><div class="btn-row"><button class="btn bad" data-action="reset" type="button">Yes, reset everything</button><button class="btn" data-close type="button">Cancel</button></div></div>'); break;
+      case 'reset': closeModal(); await initLeague(); toast('League reset to draft day'); break;
+      case 'tradenew': tradeModal(null,null); break;
+      case 'tradefor': tradeModal(el.dataset.team,p); break;
+      case 'tradesend': await sendTrade(); break;
+      case 'tradeaccept': await resolveTrade(el.dataset.id,'accepted'); break;
+      case 'tradereject': await resolveTrade(el.dataset.id,'rejected'); break;
+      case 'tradecancel': await resolveTrade(el.dataset.id,'withdrawn'); break;
+    }
+  } catch(err){ console.error(err); }
+});
+document.getElementById('app').addEventListener('change',async e=>{
+  const el=e.target;
+  if(el.dataset.slotsel){ await setSlot(el.dataset.slotsel,el.value); return; }
+  if(el.dataset.filter){ ui.pf[el.dataset.filter]=el.value; if(el.dataset.filter!=='q') render(); return; }
+  if(el.hasAttribute('data-schedteam')){ ui.schedTeam=el.value; render(); return; }
+  if(el.dataset.setting==='waiverDays'){ await setSetting('waiverDays',Number(el.value)); return; }
+  if(el.hasAttribute('data-tradepartner')){ tradeModal(el.value,null); return; }
+});
+document.getElementById('app').addEventListener('input',e=>{ if(e.target.dataset.filter==='q'){ ui.pf.q=e.target.value; const pos=e.target.selectionStart; render(); const q=document.getElementById('pf-q'); if(q){q.focus(); try{q.setSelectionRange(pos,pos);}catch(x){}} } });
+
+render();
+boot();
+})();
+</script>
+</body></html>

@@ -18,3 +18,31 @@ Week 1: Stefano @ Nolan, Connor @ Oakland A's (Brodie), Matas @ James.
 ## Passcodes
 
 Each manager unlocks their own team with a 6-digit passcode (stored hashed in the shared database). The commissioner sets or changes codes from the League tab and can restart the waiver clock from the same card.
+
+## Hosting on GitHub Pages with a shared Firebase database
+
+`index.html` is built from `league.html` by `build.sh`, and the Pages workflow in `.github/workflows/pages.yml` deploys it on every push to `master`. Without a Firebase config the hosted page runs in browser-only mode (nothing shared). To share:
+
+1. Create a Firebase project at https://console.firebase.google.com (any name, Analytics off).
+2. Build → Firestore Database → Create database → start in **production mode**, pick a region.
+3. In Firestore → Rules, replace the rules with the block below and publish:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /{document=**} {
+         allow read, write: if true;
+       }
+     }
+   }
+   ```
+
+   This makes the database writable by anyone who has the page URL, which is what a friends league needs. The passcodes in the page keep managers on their own teams.
+4. Project settings (gear icon) → Your apps → Web (`</>`) → register the app → copy the `firebaseConfig` object.
+5. Paste it into `config.js`:
+
+   ```js
+   window.MBL_FIREBASE = { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+   ```
+6. Commit and push. Open the Pages URL, choose a commissioner passcode on the setup screen, then set each manager's passcode on the League tab.

@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}</style></head><body><title>Mario Baseball League</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>body{margin:0}</style><script src="config.js"></script></head><body><title>Mario Baseball League</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
 /* Layout: Yahoo-style purple top bar with tabs, then a centered two-column work area of white cards on a lavender-grey ground. */
@@ -272,21 +272,22 @@ function applyLocal(coll,id,data){
 }
 async function write(coll,id,data){
   applyLocal(coll,id,data);
-  if(access.mode==='db'){
+  if(access.mode!=='local'){
     try{ await db.doc(coll+'/'+id).set(data); }
     catch(e){ handleWriteError(e); throw e; }
   } else lsSave();
 }
 async function remove(coll,id){
   applyLocal(coll,id,null);
-  if(access.mode==='db'){
+  if(access.mode!=='local'){
     try{ await db.doc(coll+'/'+id).delete(); }
     catch(e){ handleWriteError(e); throw e; }
   } else lsSave();
 }
 function handleWriteError(e){
   const code=e&&e.code;
-  if(code==='invalid_argument'){ access.canWrite=false; showBanner('You can view this league but not make moves. Ask the commissioner for edit access.'); toast('That move was not saved. You only have view access.','bad'); }
+  if(code==='permission-denied'){ access.canWrite=false; showBanner('The database rules are blocking writes. Commissioner: set the Firestore rules to allow read and write (see the README).'); toast('That move was not saved.','bad'); }
+  else if(code==='invalid_argument'){ access.canWrite=false; showBanner('You can view this league but not make moves. Ask the commissioner for edit access.'); toast('That move was not saved. You only have view access.','bad'); }
   else toast('Could not save: '+((e&&e.message)||'unknown error'),'bad');
   render();
 }
@@ -326,6 +327,16 @@ async function boot(){
       return;
     }
   }
+  if(window.MBL_FIREBASE&&window.MBL_FIREBASE.projectId){
+    try{
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js');
+      window.firebase.initializeApp(window.MBL_FIREBASE);
+      db=makeFirebaseAdapter(window.firebase.firestore());
+      access.mode='firebase'; access.canWrite=true; access.canAdmin=false;
+      subscribeDb(); return;
+    }catch(e){ showBanner('Could not connect to the shared league database ('+(e.message||e)+'). Showing a browser-only copy.'); }
+  }
   // Browser-only mode
   access.mode='local'; access.canWrite=true; access.canAdmin=true;
   const saved=lsLoad();
@@ -334,6 +345,12 @@ async function boot(){
   checkWaivers();
 }
 
+function loadScript(src){return new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=()=>rej(new Error('failed to load '+src));document.head.appendChild(el);});}
+function makeFirebaseAdapter(fs){
+  const wrapDoc=p=>{const r=fs.doc(p);return {id:r.id,path:p,get:()=>r.get(),set:d=>r.set(d),delete:()=>r.delete(),onSnapshot:(n,e)=>r.onSnapshot(n,e),
+    acquire:o=>fs.runTransaction(async tx=>{const lr=fs.doc(p+'-lock');const snap=await tx.get(lr);const now=Date.now();const d=snap.exists?snap.data():{};if(d.until&&d.until>now&&d.holder!==o.holder)return {acquired:false};tx.set(lr,{holder:o.holder,until:now+(o.ttlMs||30000)});return {acquired:true};})};};
+  return {doc:wrapDoc,collection:c=>({onSnapshot:(n,e)=>fs.collection(c).onSnapshot(n,e)})};
+}
 function subscribeDb(){
   const colls=['teams','games','claims','trades','log'];
   let pending=colls.length+3;
@@ -415,7 +432,8 @@ function render(){
   if(!S.ready){ view.innerHTML='<div class="empty">Loading the league…</div>'; return; }
   if(!S.settings){
     sel.innerHTML='';
-    view.innerHTML='<div class="setup card"><div class="card-b"><h1>Mario Baseball League</h1><p>The shared league has not been set up yet. Setting it up loads the six drafted rosters and the 12-week schedule.</p>'+(access.canWrite?'<button class="btn primary" data-action="init" type="button">Set up the league from the draft</button>':'<p>Ask the commissioner to open this page and set it up.</p>')+'</div></div>';
+    const needCode=access.mode==='firebase';
+    view.innerHTML='<div class="setup card"><div class="card-b form"><h1>Mario Baseball League</h1><p>The shared league has not been set up yet. Setting it up loads the six drafted rosters and the 12-week schedule.</p>'+(access.canWrite?(needCode?'<label style="text-align:left">Choose a commissioner passcode (6 digits)<input id="setup-code" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6 digits"></label><p class="help" style="margin:0">Only the commissioner can advance weeks, set team passcodes and reset the league. You will set each manager\'s passcode next.</p>':'')+'<div><button class="btn primary" data-action="init" type="button">Set up the league from the draft</button></div>':'<p>Ask the commissioner to open this page and set it up.</p>')+'</div></div>';
     return;
   }
   const mg=document.getElementById('managing');
@@ -427,7 +445,8 @@ function render(){
     mg.querySelector('[data-action=lock]').hidden=!acting;
     if(!acting&&ui.tab==='team'){ view.innerHTML=lockCard(); return; }
   } else {
-    sel.hidden=false; mg.querySelector('.mg-locked').hidden=true;
+    sel.hidden=false; const cu=commishUnlocked(); mg.querySelector('.mg-locked').hidden=!cu;
+    if(cu){ mg.querySelector('.mg-name').textContent='Commissioner'; mg.querySelector('[data-action=lock]').hidden=false; }
     if(!acting||!team(acting)) acting=TEAM_ORDER[0];
     sel.innerHTML=teamsList().map(t=>'<option value="'+t.id+'"'+(t.id===acting?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('');
   }
@@ -437,15 +456,17 @@ function render(){
 function showBanner(msg){const b=document.getElementById('banner');b.textContent=msg;b.hidden=false;}
 function card(title,body,sub,extra){return '<section class="card"><div class="card-h"><h2>'+title+'</h2>'+(sub?'<span class="sub">'+sub+'</span>':'')+(extra?'<span class="spacer"></span>'+extra:'')+'</div>'+body+'</section>';}
 let unlock=null; try{unlock=JSON.parse(localStorage.getItem('mbl-unlock')||'null');}catch(e){}
-function lockActive(){return access.mode==='db'&&!!S.passcodes&&!access.canAdmin;}
+function commishUnlocked(){return !!(unlock&&unlock.team==='__commish'&&S.passcodes&&S.passcodes.commissioner&&S.passcodes.commissioner.hash===unlock.hash);}
+function isAdmin(){return access.canAdmin||commishUnlocked();}
+function lockActive(){return access.mode!=='local'&&!!S.passcodes&&!isAdmin();}
 function unlockedTeam(){ if(!lockActive()) return acting; const u=unlock; if(u&&S.passcodes[u.team]&&S.passcodes[u.team].hash===u.hash&&team(u.team)) return u.team; return null; }
 async function sha256(str){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 const W=()=>access.canWrite&&(!lockActive()||!!unlockedTeam());
-const ADMIN=()=>access.mode==='local'||access.canAdmin;
+const ADMIN=()=>access.mode==='local'||isAdmin();
 function lockCard(){
   return '<section class="card" style="max-width:460px;margin:24px auto"><div class="card-h"><h2>Enter your team passcode</h2></div><div class="card-b form">'
     +'<p class="help" style="margin:0">Each manager has a 6-digit passcode from the commissioner. It unlocks your team on this device only.</p>'
-    +'<label>Team<select id="lock-team">'+teamsList().map(t=>'<option value="'+t.id+'"'+((unlock&&unlock.team===t.id)?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+'</select></label>'
+    +'<label>Team<select id="lock-team">'+teamsList().map(t=>'<option value="'+t.id+'"'+((unlock&&unlock.team===t.id)?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+(S.passcodes&&S.passcodes.commissioner?'<option value="__commish">Commissioner</option>':'')+'</select></label>'
     +'<label>Passcode<input id="lock-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="6 digits"></label>'
     +'<div class="btn-row"><button class="btn primary" data-action="unlock" type="button">Unlock my team</button></div></div></section>';
 }
@@ -571,7 +592,7 @@ function vLeague(){
       +'<label>Waiver period (days)<select id="waiverdays" data-setting="waiverDays">'+[1,2,3,4,5,7].map(d=>'<option value="'+d+'"'+(S.settings.waiverDays===d?' selected':'')+'>'+d+'</option>').join('')+'</select></label>'
       +'<div><span class="eyebrow">Waiver order</span><ol class="prio list" style="margin-top:6px;border:1px solid var(--line);border-radius:8px">'+wo.map((id,i)=>'<li><span class="num">'+(i+1)+'</span>'+teamline(id)+'<span class="spacer"></span><button class="btn sm" data-action="wo" data-id="'+id+'" data-d="-1" type="button"'+(i===0?' disabled':'')+'>↑</button><button class="btn sm" data-action="wo" data-id="'+id+'" data-d="1" type="button"'+(i===wo.length-1?' disabled':'')+'>↓</button></li>').join('')+'</ol></div>'
       +'<div class="btn-row"><button class="btn sm" data-action="waiverreset" type="button"'+(Object.keys(waiverItems()).length?'':' disabled')+'>Restart waiver clock</button><span class="help">Gives every player on the wire a fresh '+S.settings.waiverDays+'-day window from now.</span></div>'
-      +(access.mode==='db'?'<div><span class="eyebrow">Team passcodes</span><div class="help" style="margin:4px 0 6px">Each manager unlocks their own team with a 6-digit code. Changing a code signs that manager out everywhere.</div><ul class="prio list" style="border:1px solid var(--line);border-radius:8px">'+teamsList().map(t=>'<li>'+teamline(t.id)+'<span class="spacer"></span><input id="pc-'+t.id+'" inputmode="numeric" maxlength="6" placeholder="'+(S.passcodes&&S.passcodes[t.id]?'••••••':'none set')+'" style="width:90px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)"><button class="btn sm" data-action="setcode" data-id="'+t.id+'" type="button">Set</button></li>').join('')+'</ul></div>':'')
+      +(access.mode!=='local'?'<div><span class="eyebrow">Team passcodes</span><div class="help" style="margin:4px 0 6px">Each manager unlocks their own team with a 6-digit code. Changing a code signs that manager out everywhere.</div><ul class="prio list" style="border:1px solid var(--line);border-radius:8px">'+[...teamsList().map(t=>[t.id,teamline(t.id)]),['__commish','<span class="teamline"><span class="avatar" style="background:var(--brand)">★</span><span class="n">Commissioner</span></span>']].map(([id,line])=>'<li>'+line+'<span class="spacer"></span><input id="pc-'+id+'" inputmode="numeric" maxlength="6" placeholder="'+(S.passcodes&&S.passcodes[id==='__commish'?'commissioner':id]?'••••••':'none set')+'" style="width:90px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)"><button class="btn sm" data-action="setcode" data-id="'+id+'" type="button">Set</button></li>').join('')+'</ul></div>':'')
       +(access.canAdmin?'<div><span class="eyebrow">Danger zone</span><div class="btn-row" style="margin-top:6px"><button class="btn sm bad" data-action="resetask" type="button">Reset league to draft day</button></div></div>':'')
       +'</div>');
   }
@@ -739,7 +760,7 @@ async function checkWaivers(){
   if(!cleared.length) return;
   processing=true;
   try{
-    if(access.mode==='db'){ const lease=await db.doc('league/waivers').acquire({holder:TAB_ID,ttlMs:20000}); if(!lease.acquired) return; }
+    if(access.mode!=='local'){ const lease=await db.doc('league/waivers').acquire({holder:TAB_ID,ttlMs:20000}); if(!lease.acquired) return; }
     const order=[...(S.settings.waiverOrder||TEAM_ORDER)];
     const teams={}; TEAM_ORDER.forEach(id=>{ if(team(id)) teams[id]=cloneTeam(id); });
     const wv=JSON.parse(JSON.stringify(S.waivers)); const claimOps=[]; const logs=[]; const touched=new Set();
@@ -787,10 +808,15 @@ document.getElementById('app').addEventListener('click',async e=>{
   const a=el.dataset.action, p=el.dataset.p;
   try{
     switch(a){
-      case 'init': await initLeague(); break;
-      case 'unlock': {const tid=document.getElementById('lock-team').value; const code=document.getElementById('lock-code').value.trim(); if(!/^\d{6}$/.test(code)){toast('Enter the 6-digit code','bad');return;} const h=await sha256(code); if(S.passcodes&&S.passcodes[tid]&&S.passcodes[tid].hash===h){unlock={team:tid,hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, '+team(tid).manager); render();} else toast('Wrong passcode for '+team(tid).name,'bad'); break;}
+      case 'init': {let code=null; if(access.mode==='firebase'){ code=document.getElementById('setup-code').value.trim(); if(!/^\d{6}$/.test(code)){toast('Choose a 6-digit commissioner passcode first','bad');return;} }
+        await initLeague();
+        if(code){ const h=await sha256(code); await write('league','passcodes',{commissioner:{hash:h},updatedAt:new Date().toISOString()}); unlock={team:'__commish',hash:h}; try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('League ready. Set each manager\'s passcode on the League tab.'); render(); }
+        break;}
+      case 'unlock': {const tid=document.getElementById('lock-team').value; const code=document.getElementById('lock-code').value.trim(); if(!/^\d{6}$/.test(code)){toast('Enter the 6-digit code','bad');return;} const h=await sha256(code);
+        if(tid==='__commish'){ if(S.passcodes&&S.passcodes.commissioner&&S.passcodes.commissioner.hash===h){unlock={team:'__commish',hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, commissioner'); render();} else toast('Wrong commissioner passcode','bad'); break; }
+        if(S.passcodes&&S.passcodes[tid]&&S.passcodes[tid].hash===h){unlock={team:tid,hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, '+team(tid).manager); render();} else toast('Wrong passcode for '+team(tid).name,'bad'); break;}
       case 'lock': unlock=null; try{localStorage.removeItem('mbl-unlock');}catch(x){} ui.tab='team'; render(); break;
-      case 'setcode': {const tid=el.dataset.id; const code=document.getElementById('pc-'+tid).value.trim(); if(!/^\d{6}$/.test(code)){toast('Passcodes are exactly 6 digits','bad');return;} const pc=JSON.parse(JSON.stringify(S.passcodes||{})); pc[tid]={hash:await sha256(code)}; pc.updatedAt=new Date().toISOString(); await write('league','passcodes',pc); toast('Passcode set for '+team(tid).name); render(); break;}
+      case 'setcode': {const tid=el.dataset.id; const code=document.getElementById('pc-'+tid).value.trim(); if(!/^\d{6}$/.test(code)){toast('Passcodes are exactly 6 digits','bad');return;} const pc=JSON.parse(JSON.stringify(S.passcodes||{})); const key=tid==='__commish'?'commissioner':tid; const h=await sha256(code); pc[key]={hash:h}; pc.updatedAt=new Date().toISOString(); if(key==='commissioner'&&commishUnlocked()){unlock={team:'__commish',hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){}} await write('league','passcodes',pc); toast('Passcode set for '+(key==='commissioner'?'the commissioner':team(tid).name)); render(); break;}
       case 'waiverreset': {const wv=JSON.parse(JSON.stringify(S.waivers||{items:{}})); const until=new Date(Date.now()+(S.settings.waiverDays||2)*864e5).toISOString(); const names=Object.keys(wv.items); names.forEach(n=>{wv.items[n].clearsAt=until;}); await write('league','waivers',wv); await addLog('waiver',null,'Commissioner restarted the waiver clock: '+names.join(', ')+' now clear '+fmtDate(until)+'.'); toast('Waiver clock restarted'); render(); break;}
       case 'drop': {const t=team(acting); const inLineup=t.roster.find(r=>r.p===p);
         openModal('Drop '+esc(p)+'?','<div class="form"><p style="margin:0">'+esc(p)+' goes on waivers for '+S.settings.waiverDays+' day'+(S.settings.waiverDays===1?'':'s')+'. Other teams can claim them before they become a free agent.'+(inLineup&&inLineup.slot!=='BN'?' Your '+inLineup.slot+' slot will be empty.':'')+'</p><div class="btn-row"><button class="btn bad" data-action="confirmdrop" data-p="'+esc(p)+'" type="button">Drop '+esc(p)+'</button><button class="btn" data-close type="button">Keep</button></div></div>'); break;}

@@ -14,3 +14,7 @@ A Yahoo-Fantasy-style web app for a six-manager Mario Super Sluggers league.
 - Trades are proposed by one manager and accepted or rejected by the other.
 
 Week 1: Stefano @ Nolan, Connor @ Oakland A's (Brodie), Matas @ James.
+
+## Passcodes
+
+Each manager unlocks their own team with a 6-digit passcode (stored hashed in the shared database). The commissioner sets or changes codes from the League tab and can restart the waiver clock from the same card.

@@ -77,6 +77,19 @@ tr.empty td{color:var(--muted);font-style:italic}
 .teamline .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .teamline .m{color:var(--muted);font-size:12px}
 .aka{color:var(--muted);font-size:12px}
+.plink,.tlink{background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.plink{text-decoration:underline dotted var(--muted);text-underline-offset:3px}
+.plink:hover,.tlink:hover .n{color:var(--brand)}
+.statline{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);white-space:nowrap}
+.stats-grid{display:grid;gap:8px}
+.statrow{display:grid;grid-template-columns:52px 1fr 28px;align-items:center;gap:10px}
+.statrow .sl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.statrow .bar{height:10px;border-radius:5px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.statrow .bar span{display:block;height:100%;background:var(--brand);border-radius:5px}
+.statrow b{font-family:var(--font-display);font-variant-numeric:tabular-nums;text-align:right}
+.pm-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.pm-head h3{font-size:20px;font-weight:800}
+.matchup .side{cursor:pointer}
 .cap{display:inline-block;background:#ffb000;color:#1b1826;font-size:10px;font-weight:800;border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:1px}
 .tag{display:inline-block;font-size:12px;font-weight:600;border-radius:5px;padding:2px 7px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
 .tag.fa{background:var(--good-soft);color:var(--good);border-color:transparent}
@@ -207,6 +220,26 @@ const CHARACTERS = [
  ['Wiggler','Other'],['Monty Mole','Other'],['Blooper','Other'],['Mii','Other'],
 ];
 const STADIUMS = ['Mario Stadium',"Luigi's Mansion",'Peach Ice Garden','Daisy Cruiser','Yoshi Park','Wario City','DK Jungle',"Bowser's Castle","Bowser Jr.'s Playhouse"];
+// Pitch / Bat / Field / Run, out of 10 (community-compiled Super Sluggers ratings)
+const STATS = {
+ 'Mario':[6,7,6,7],'Luigi':[6,6,7,7],'Peach':[9,4,8,5],'Daisy':[7,6,8,5],'Wario':[5,8,3,4],'Waluigi':[8,4,8,5],
+ 'Yoshi':[4,4,6,9],'Red Yoshi':[3,4,4,8],'Blue Yoshi':[4,2,6,8],'Yellow Yoshi':[3,4,6,7],'Pink Yoshi':[2,3,6,9],'Light Blue Yoshi':[3,3,6,8],'Birdo':[4,8,7,5],
+ 'Donkey Kong':[6,9,3,2],'Diddy Kong':[5,4,8,6],'Dixie Kong':[3,3,8,7],'Funky Kong':[4,8,6,3],'Tiny Kong':[5,5,7,5],
+ 'King K. Rool':[6,10,2,1],'Green Kritter':[4,7,7,3],'Blue Kritter':[5,6,7,3],'Red Kritter':[3,8,7,3],'Brown Kritter':[3,7,7,4],
+ 'Bowser':[5,10,3,3],'Bowser Jr.':[5,7,4,7],
+ 'Toad':[5,5,3,7],'Blue Toad':[4,6,3,7],'Yellow Toad':[3,6,4,7],'Green Toad':[4,5,4,7],'Purple Toad':[5,6,2,7],'Toadette':[5,3,4,8],'Toadsworth':[7,3,7,3],
+ 'Baby Mario':[5,3,4,8],'Baby Luigi':[5,2,5,8],'Baby Peach':[8,2,5,6],'Baby Daisy':[6,4,5,6],'Baby DK':[7,7,3,4],
+ 'Boo':[9,3,3,5],'King Boo':[7,7,3,4],'Petey Piranha':[4,10,5,2],
+ 'Goomba':[3,6,6,3],'Paragoomba':[6,3,7,5],
+ 'Green Koopa Troopa':[3,6,4,6],'Red Koopa Troopa':[4,6,3,6],'Green Paratroopa':[3,5,7,5],'Red Paratroopa':[4,4,7,5],
+ 'Blue Magikoopa':[8,2,8,2],'Red Magikoopa':[8,3,8,1],'Green Magikoopa':[7,2,8,2],'Yellow Magikoopa':[7,3,8,2],
+ 'Dry Bones':[4,7,4,5],'Green Dry Bones':[3,7,4,6],'Blue Dry Bones':[3,7,5,5],'Dark Bones':[5,7,4,5],
+ 'Hammer Bro':[4,7,6,3],'Fire Bro':[3,8,6,3],'Boomerang Bro':[5,7,5,3],
+ 'Shy Guy':[4,5,7,4],'Blue Shy Guy':[5,4,7,4],'Yellow Shy Guy':[4,4,7,5],'Green Shy Guy':[2,5,7,5],'Gray Shy Guy':[4,4,8,4],
+ 'Blue Pianta':[5,8,4,2],'Red Pianta':[4,8,4,2],'Yellow Pianta':[4,8,4,2],'Blue Noki':[5,4,4,7],'Red Noki':[5,4,4,7],'Green Noki':[4,5,5,7],
+ 'Wiggler':[3,7,4,7],'Monty Mole':[4,4,5,7],'Blooper':[6,4,5,6],'Mii':[6,6,6,6],
+};
+const STAT_LABELS=['Pitch','Bat','Field','Run'];
 const AKA = {'Yellow Shy Guy':'Piss Guy','Yellow Toad':'Piss Toad','Yellow Yoshi':'Piss Yoshi','Yellow Magikoopa':'Pissard','Blooper':'Jose','Blue Yoshi':'Dark Blue Yoshi','Petey Piranha':'Petey Pirhanna','Monty Mole':'Monty Molerat','Mii':'Undetermined'};
 const CHAR = {};
 CHARACTERS.forEach(([n,g,c])=>{CHAR[n]={name:n,group:g,cap:!!c,type:'char'};});
@@ -376,11 +409,12 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const team=id=>S.teams[id];
 const teamsList=()=>TEAM_ORDER.map(id=>S.teams[id]).filter(Boolean);
 const akaOf=n=>AKA[n]?'<span class="aka"> (aka '+esc(AKA[n])+')</span>':'';
-const nameHtml=n=>esc(n)+akaOf(n);
+const nameHtml=n=>'<button type="button" class="plink" data-player="'+esc(n)+'">'+esc(n)+'</button>'+akaOf(n);
+const statLine=n=>STATS[n]?'<span class="statline">'+STATS[n].join(' · ')+'</span>':'<span class="aka">—</span>';
 const fmtDate=iso=>{const d=new Date(iso);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});};
 function untilText(iso){const ms=new Date(iso).getTime()-Date.now();if(ms<=0)return 'clearing now';const h=Math.floor(ms/36e5),m=Math.floor((ms%36e5)/6e4);if(h>=24)return Math.floor(h/24)+'d '+(h%24)+'h';return h>0?h+'h '+m+'m':m+'m';}
 function avatar(t,lg){ if(!t) return ''; const init=(t.name||'?').trim()[0].toUpperCase(); return '<span class="avatar'+(lg?' lg':'')+'" style="background:'+esc(t.color||'#777')+'">'+esc(init)+'</span>'; }
-function teamline(id,withMgr){const t=team(id); if(!t) return esc(id); return '<span class="teamline">'+avatar(t)+'<span class="n">'+esc(t.name)+'</span>'+(withMgr?'<span class="m">'+esc(t.manager)+'</span>':'')+'</span>';}
+function teamline(id,withMgr){const t=team(id); if(!t) return esc(id); return '<button type="button" class="tlink teamline" data-team="'+id+'">'+avatar(t)+'<span class="n">'+esc(t.name)+'</span>'+(withMgr?'<span class="m">'+esc(t.manager)+'</span>':'')+'</button>';}
 function rosteredMap(){const m={};teamsList().forEach(t=>{t.roster.forEach(r=>m[r.p]=t.id);if(t.stadium)m[t.stadium]=t.id;});return m;}
 function charCount(t){return t.roster.length;}
 function pendingClaims(){return Object.values(S.claims).filter(c=>c.status==='pending');}
@@ -485,9 +519,9 @@ function matchupCard(g,editable){
       :'<button class="btn sm" data-action="savescore" data-game="'+g.id+'" type="button">Save</button><button class="btn sm primary" data-action="final" data-game="'+g.id+'" type="button">Mark final</button>')+'</span>';
   }
   return '<section class="card"><div class="matchup">'
-    +'<div class="side'+(win===a.id?' win':'')+'">'+avatar(a,true)+'<span class="n">'+esc(a.name)+'</span><span class="r">'+esc(a.manager)+' · '+record(a.id)+' · Away</span></div>'
+    +'<div class="side'+(win===a.id?' win':'')+'" data-team="'+a.id+'">'+avatar(a,true)+'<span class="n">'+esc(a.name)+'</span><span class="r">'+esc(a.manager)+' · '+record(a.id)+' · Away</span></div>'
     +score
-    +'<div class="side'+(win===h.id?' win':'')+'">'+avatar(h,true)+'<span class="n">'+esc(h.name)+'</span><span class="r">'+esc(h.manager)+' · '+record(h.id)+' · Home</span></div>'
+    +'<div class="side'+(win===h.id?' win':'')+'" data-team="'+h.id+'">'+avatar(h,true)+'<span class="n">'+esc(h.name)+'</span><span class="r">'+esc(h.manager)+' · '+record(h.id)+' · Home</span></div>'
     +'</div><div class="matchup-foot">'+foot+'</div></section>';
 }
 
@@ -503,16 +537,16 @@ function vTeam(){
 
   const slotOpts=cur=>[...POS,'BN'].map(p=>'<option value="'+p+'"'+(p===cur?' selected':'')+'>'+p+'</option>').join('');
   const rowHtml=(r,slot)=>{
-    if(!r) return '<tr class="empty"><td><span class="slot">'+slot+'</span></td><td colspan="3">Empty – move a bench player here</td><td></td></tr>';
+    if(!r) return '<tr class="empty"><td><span class="slot">'+slot+'</span></td><td colspan="4">Empty – move a bench player here</td><td></td></tr>';
     const c=CHAR[r.p]||{group:'?'};
     return '<tr><td>'+(W()?'<select class="slotsel" id="slot-'+r.p.replace(/\W/g,'_')+'" data-slotsel="'+esc(r.p)+'" aria-label="Lineup slot">'+slotOpts(r.slot)+'</select>':'<span class="slot'+(r.slot==='BN'?' bn':'')+'">'+r.slot+'</span>')+'</td>'
-      +'<td>'+nameHtml(r.p)+(t.captain===r.p?'<span class="cap">CAPTAIN</span>':'')+'</td><td class="aka">'+esc(c.group)+'</td>'
+      +'<td>'+nameHtml(r.p)+(t.captain===r.p?'<span class="cap">CAPTAIN</span>':'')+'</td><td>'+statLine(r.p)+'</td><td class="aka">'+esc(c.group)+'</td>'
       +'<td>'+(c.cap&&W()&&t.captain!==r.p?'<button class="btn sm" data-action="captain" data-p="'+esc(r.p)+'" type="button">Make captain</button>':(c.cap?'<span class="aka">Captain eligible</span>':''))+'</td>'
       +'<td class="num">'+(W()?'<button class="btn sm bad" data-action="drop" data-p="'+esc(r.p)+'" type="button">Drop</button>':'')+'</td></tr>';
   };
   const starters=POS.map(p=>rowHtml(t.roster.find(r=>r.slot===p),p)).join('');
   const bench=t.roster.filter(r=>r.slot==='BN').map(r=>rowHtml(r,'BN')).join('');
-  const lineup=card('Lineup','<div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Player</th><th>Group</th><th>Captain</th><th class="num">Action</th></tr></thead><tbody>'+starters+'<tr><th colspan="5">Bench</th></tr>'+(bench||'<tr class="empty"><td colspan="5">Bench is empty</td></tr>')+'</tbody></table></div>',
+  const lineup=card('Lineup','<div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Player</th><th>P · B · F · R</th><th>Group</th><th>Captain</th><th class="num">Action</th></tr></thead><tbody>'+starters+'<tr><th colspan="6">Bench</th></tr>'+(bench||'<tr class="empty"><td colspan="6">Bench is empty</td></tr>')+'</tbody></table></div>',
     charCount(t)+' / '+MAX_CHARS+' characters'+(charCount(t)>MAX_CHARS?' · <span style="color:var(--bad);font-weight:700">over the limit, drop '+(charCount(t)-MAX_CHARS)+' before adding anyone</span>':''));
 
   const stadium=card('Home stadium','<div class="card-b" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+(t.stadium?'<span class="tag std">'+esc(t.stadium)+'</span><span class="help">Home games are played here. Every team must keep a stadium: to change it, add another stadium on the Players tab and drop this one in the swap.</span>':'<span class="help">No stadium. Pick one up on the Players tab.</span>')+'</div>');
@@ -539,20 +573,15 @@ function vPlayers(){
     if(q&&!(n.toLowerCase().includes(q)||(AKA[n]||'').toLowerCase().includes(q))) return false;
     return true;
   }).sort((a,b)=>{const ta=CHAR[a].type==='stadium'?1:0,tb=CHAR[b].type==='stadium'?1:0;return ta-tb||a.localeCompare(b);});
-  const myClaimFor=n=>pendingClaims().find(c=>c.team===acting&&c.add===n);
   const body=rows.map(n=>{
-    const c=CHAR[n]; const owner=rm[n]; const w=wv[n];
-    let status,action='';
-    if(owner){ status=teamline(owner); if(W()&&owner===acting) action=c.type==='stadium'?'<span class="aka">Your stadium</span>':'<button class="btn sm bad" data-action="drop" data-p="'+esc(n)+'" type="button">Drop</button>'; else if(W()) action='<button class="btn sm" data-action="tradefor" data-p="'+esc(n)+'" data-team="'+owner+'" type="button">Trade for</button>'; }
-    else if(w){ status='<span class="tag wv">Waivers · '+untilText(w.clearsAt)+'</span>'; const mc=myClaimFor(n); action=mc?'<span class="aka">Claim pending</span> '+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+mc.id+'" type="button">Cancel</button>':''):(W()?'<button class="btn sm primary" data-action="claim" data-p="'+esc(n)+'" type="button">Claim</button>':''); }
-    else { status='<span class="tag fa">Free agent</span>'; if(W()) action='<button class="btn sm good" data-action="add" data-p="'+esc(n)+'" type="button">Add</button>'; }
-    return '<tr><td>'+nameHtml(n)+(c.cap?'<span class="cap">C</span>':'')+'</td><td class="aka">'+(c.type==='stadium'?'<span class="tag std">Stadium</span>':esc(c.group))+'</td><td>'+status+'</td><td class="num">'+action+'</td></tr>';
+    const c=CHAR[n]; const ps=playerStatus(n);
+    return '<tr><td>'+nameHtml(n)+(c.cap?'<span class="cap">C</span>':'')+'</td><td>'+statLine(n)+'</td><td class="aka">'+(c.type==='stadium'?'<span class="tag std">Stadium</span>':esc(c.group))+'</td><td>'+ps.status+'</td><td class="num">'+ps.action+'</td></tr>';
   }).join('');
   const filters='<div class="filters"><select id="pf-status" data-filter="status">'
     +[['available','Available (free agents)'],['waivers','On waivers'],['fa_wv','Free agents + waivers'],['all','All players'],...teamsList().map(x=>['team:'+x.id,x.name+' roster'])].map(([v,l])=>'<option value="'+v+'"'+(f.status===v?' selected':'')+'>'+esc(l)+'</option>').join('')
     +'</select><select id="pf-group" data-filter="group"><option value="all">All groups</option>'+groups.map(g=>'<option value="'+esc(g)+'"'+(f.group===g?' selected':'')+'>'+esc(g)+'</option>').join('')+'</select>'
     +'<input id="pf-q" data-filter="q" type="search" placeholder="Search players" value="'+esc(f.q)+'"></div>';
-  const table=card('Players',filters+'<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>Group</th><th>Status</th><th class="num">Action</th></tr></thead><tbody>'+(body||'<tr><td colspan="4" class="empty">No players match.</td></tr>')+'</tbody></table></div>',rows.length+' shown');
+  const table=card('Players',filters+'<div class="tbl-wrap"><table><thead><tr><th>Player</th><th>P · B · F · R</th><th>Group</th><th>Status</th><th class="num">Action</th></tr></thead><tbody>'+(body||'<tr><td colspan="5" class="empty">No players match.</td></tr>')+'</tbody></table></div>',rows.length+' shown');
 
   const wo=S.settings.waiverOrder||[];
   const prio=card('Waiver priority','<ol class="prio list">'+wo.map((id,i)=>'<li'+(id===acting?' style="background:var(--brand-soft)"':'')+'><span class="num">'+(i+1)+'</span>'+teamline(id)+'</li>').join('')+'</ol><div class="card-b help">Dropped players sit on waivers for '+S.settings.waiverDays+' day'+(S.settings.waiverDays===1?'':'s')+'. When they clear, the claiming team with the best priority gets them and moves to the bottom. Unclaimed players become free agents.</div>');
@@ -563,6 +592,38 @@ function vPlayers(){
   return '<div class="grid"><div class="stack">'+table+'</div><div class="stack">'+wire+claims+prio+'</div></div>';
 }
 
+function playerStatus(n){
+  const c=CHAR[n]; const owner=rosteredMap()[n]; const w=waiverItems()[n];
+  let status,action='';
+  const mc=pendingClaims().find(x=>x.team===acting&&x.add===n);
+  if(owner){ const slot=(team(owner).roster.find(r=>r.p===n)||{}).slot; status=teamline(owner)+(slot?' <span class="slot'+(slot==='BN'?' bn':'')+'">'+slot+'</span>':'')+(team(owner).captain===n?'<span class="cap">CAPTAIN</span>':'');
+    if(W()&&owner===acting) action=c.type==='stadium'?'<span class="aka">Your stadium</span>':'<button class="btn sm bad" data-action="drop" data-p="'+esc(n)+'" type="button">Drop</button>';
+    else if(W()&&acting) action='<button class="btn sm" data-action="tradefor" data-p="'+esc(n)+'" data-team="'+owner+'" type="button">Trade for</button>'; }
+  else if(w){ status='<span class="tag wv">Waivers · '+untilText(w.clearsAt)+'</span>'; action=mc?'<span class="aka">Claim pending</span> '+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+mc.id+'" type="button">Cancel</button>':''):(W()?'<button class="btn sm primary" data-action="claim" data-p="'+esc(n)+'" type="button">Claim</button>':''); }
+  else { status='<span class="tag fa">Free agent</span>'; if(W()) action='<button class="btn sm good" data-action="add" data-p="'+esc(n)+'" type="button">Add</button>'; }
+  return {status,action};
+}
+function statBars(n){ const st=STATS[n]; if(!st) return ''; const total=st.reduce((a,b)=>a+b,0);
+  return '<div class="stats-grid">'+st.map((v,i)=>'<div class="statrow"><span class="sl">'+STAT_LABELS[i]+'</span><span class="bar"><span style="width:'+(v*10)+'%"></span></span><b>'+v+'</b></div>').join('')+'</div><div class="help" style="margin-top:8px">Total '+total+' / 40. Ratings are the in-game Pitch, Bat, Field and Run values out of 10.</div>'; }
+function openPlayer(n){
+  const c=CHAR[n]; if(!c) return; const ps=playerStatus(n);
+  const best=STATS[n]?STAT_LABELS[STATS[n].indexOf(Math.max(...STATS[n]))]:null;
+  openModal(esc(n),'<div class="form">'
+    +'<div class="pm-head"><div><h3>'+esc(n)+(c.cap?'<span class="cap">CAPTAIN ELIGIBLE</span>':'')+'</h3><div class="aka">'+(AKA[n]?'aka '+esc(AKA[n])+' · ':'')+(c.type==='stadium'?'Stadium':esc(c.group)+(best?' · best at '+best:''))+'</div></div></div>'
+    +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+ps.status+'</div>'
+    +(c.type==='stadium'?'<div class="help">Home games for the team that owns this stadium are played here. Stadiums have no player ratings.</div>':statBars(n))
+    +(ps.action?'<div class="btn-row">'+ps.action+'</div>':'')+'</div>');
+}
+function openTeam(id){
+  const t=team(id); if(!t) return; const st=standings(); const row=st.find(r=>r.id===id)||{w:0,l:0,diff:0}; const wo=S.settings.waiverOrder||[];
+  const rowHtml=(r,slot)=>r?'<tr><td><span class="slot'+(slot==='BN'?' bn':'')+'">'+slot+'</span></td><td>'+nameHtml(r.p)+(t.captain===r.p?'<span class="cap">C</span>':'')+'</td><td>'+statLine(r.p)+'</td></tr>':'<tr class="empty"><td><span class="slot">'+slot+'</span></td><td colspan="2">Empty</td></tr>';
+  const rows=POS.map(p=>rowHtml(t.roster.find(r=>r.slot===p),p)).join('')+t.roster.filter(r=>r.slot==='BN').map(r=>rowHtml(r,'BN')).join('');
+  openModal(esc(t.name),'<div class="form">'
+    +'<div class="pm-head">'+avatar(t,true)+'<div><h3>'+esc(t.name)+'</h3><div class="aka">'+esc(t.manager)+' · '+esc(CONFS[t.conf].name)+' · '+row.w+'-'+row.l+' · run diff '+(row.diff>0?'+':'')+row.diff+' · waiver #'+(wo.indexOf(id)+1)+'</div></div></div>'
+    +'<div><span class="tag std">'+esc(t.stadium||'No stadium')+'</span> <span class="aka">'+t.roster.length+' / '+MAX_CHARS+' characters</span></div>'
+    +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:8px"><table><thead><tr><th>Slot</th><th>Player</th><th>P · B · F · R</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +(W()&&acting&&id!==acting?'<div class="btn-row"><button class="btn primary" data-action="tradefor" data-team="'+id+'" type="button">Propose a trade</button></div>':'')+'</div>');
+}
 function vMatchups(){
   const w=viewWeek();
   const nav='<div class="card"><div class="card-h"><div class="weeknav"><button class="btn sm" data-action="week" data-d="-1" type="button"'+(w<=1?' disabled':'')+'>‹</button><b>Week '+w+'</b><button class="btn sm" data-action="week" data-d="1" type="button"'+(w>=WEEKS?' disabled':'')+'>›</button>'+(w!==curWeek()?'<button class="btn sm" data-action="week" data-d="0" type="button">Current</button>':'')+'</div><span class="spacer"></span><span class="sub">'+(W()?'Enter the final score of each Super Sluggers game, then mark it final.':'Scores are entered by the managers.')+'</span></div></div>';
@@ -807,7 +868,8 @@ document.getElementById('app').addEventListener('click',async e=>{
   const tab=e.target.closest('[data-tab]'); if(tab){ui.tab=tab.dataset.tab;try{localStorage.setItem('mbl-tab',ui.tab);}catch(x){}render();return;}
   const closeEl=e.target.closest('[data-close]');
   if(closeEl){ if(!closeEl.classList.contains('modal-bg')){closeModal();return;} if(e.target===closeEl){closeModal();return;} }
-  const el=e.target.closest('[data-action]'); if(!el) return;
+  const el=e.target.closest('[data-action]');
+  if(!el){ const pl=e.target.closest('[data-player]'); if(pl){openPlayer(pl.dataset.player);return;} const tl=e.target.closest('[data-team]'); if(tl){openTeam(tl.dataset.team);return;} return; }
   const a=el.dataset.action, p=el.dataset.p;
   try{
     switch(a){
@@ -841,7 +903,7 @@ document.getElementById('app').addEventListener('click',async e=>{
       case 'resetask': openModal('Reset the league?','<div class="form"><p style="margin:0">This wipes every score, transaction, claim and trade and restores the drafted rosters. It cannot be undone.</p><div class="btn-row"><button class="btn bad" data-action="reset" type="button">Yes, reset everything</button><button class="btn" data-close type="button">Cancel</button></div></div>'); break;
       case 'reset': closeModal(); await initLeague(); toast('League reset to draft day'); break;
       case 'tradenew': tradeModal(null,null); break;
-      case 'tradefor': tradeModal(el.dataset.team,p); break;
+      case 'tradefor': tradeModal(el.dataset.team,p||null); break;
       case 'tradesend': await sendTrade(); break;
       case 'tradeaccept': await resolveTrade(el.dataset.id,'accepted'); break;
       case 'tradereject': await resolveTrade(el.dataset.id,'rejected'); break;

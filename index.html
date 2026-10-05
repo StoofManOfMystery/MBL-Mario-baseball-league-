@@ -184,7 +184,7 @@ tr.empty td{color:var(--muted);font-style:italic}
 /* ---------- League data ---------- */
 const CONFS = {A:{name:'Super League'}, N:{name:'Shitter League'}};
 const POS = ['P','C','1B','2B','3B','SS','LF','CF','RF'];
-const MAX_CHARS = 12;
+const MAX_CHARS = 11;
 const TEAM_ORDER = ['connor','stefano','nolan','matas','james','brodie'];
 // [name, group, captainEligible]
 const CHARACTERS = [
@@ -513,9 +513,9 @@ function vTeam(){
   const starters=POS.map(p=>rowHtml(t.roster.find(r=>r.slot===p),p)).join('');
   const bench=t.roster.filter(r=>r.slot==='BN').map(r=>rowHtml(r,'BN')).join('');
   const lineup=card('Lineup','<div class="tbl-wrap"><table><thead><tr><th>Slot</th><th>Player</th><th>Group</th><th>Captain</th><th class="num">Action</th></tr></thead><tbody>'+starters+'<tr><th colspan="5">Bench</th></tr>'+(bench||'<tr class="empty"><td colspan="5">Bench is empty</td></tr>')+'</tbody></table></div>',
-    charCount(t)+' / '+MAX_CHARS+' characters');
+    charCount(t)+' / '+MAX_CHARS+' characters'+(charCount(t)>MAX_CHARS?' · <span style="color:var(--bad);font-weight:700">over the limit, drop '+(charCount(t)-MAX_CHARS)+' before adding anyone</span>':''));
 
-  const stadium=card('Home stadium','<div class="card-b" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+(t.stadium?'<span class="tag std">'+esc(t.stadium)+'</span><span class="help">Home games are played here.</span>'+(W()?'<span class="spacer"></span><button class="btn sm bad" data-action="drop" data-p="'+esc(t.stadium)+'" type="button">Drop</button>':''):'<span class="help">No stadium. Pick one up on the Players tab.</span>')+'</div>');
+  const stadium=card('Home stadium','<div class="card-b" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+(t.stadium?'<span class="tag std">'+esc(t.stadium)+'</span><span class="help">Home games are played here. Every team must keep a stadium: to change it, add another stadium on the Players tab and drop this one in the swap.</span>':'<span class="help">No stadium. Pick one up on the Players tab.</span>')+'</div>');
 
   const myClaims=pendingClaims().filter(c=>c.team===acting);
   const claims=card('Pending waiver claims',myClaims.length?'<ul class="list">'+myClaims.map(c=>'<li><span class="txt">Claim <b>'+nameHtml(c.add)+'</b>'+(c.drop?' and drop '+nameHtml(c.drop):'')+'</span><span class="aka">'+(waiverItems()[c.add]?'clears in '+untilText(waiverItems()[c.add].clearsAt):'')+'</span>'+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+c.id+'" type="button">Cancel</button>':'')+'</li>').join('')+'</ul>':'<div class="empty">No pending claims.</div>');
@@ -543,7 +543,7 @@ function vPlayers(){
   const body=rows.map(n=>{
     const c=CHAR[n]; const owner=rm[n]; const w=wv[n];
     let status,action='';
-    if(owner){ status=teamline(owner); if(W()&&owner===acting) action='<button class="btn sm bad" data-action="drop" data-p="'+esc(n)+'" type="button">Drop</button>'; else if(W()) action='<button class="btn sm" data-action="tradefor" data-p="'+esc(n)+'" data-team="'+owner+'" type="button">Trade for</button>'; }
+    if(owner){ status=teamline(owner); if(W()&&owner===acting) action=c.type==='stadium'?'<span class="aka">Your stadium</span>':'<button class="btn sm bad" data-action="drop" data-p="'+esc(n)+'" type="button">Drop</button>'; else if(W()) action='<button class="btn sm" data-action="tradefor" data-p="'+esc(n)+'" data-team="'+owner+'" type="button">Trade for</button>'; }
     else if(w){ status='<span class="tag wv">Waivers · '+untilText(w.clearsAt)+'</span>'; const mc=myClaimFor(n); action=mc?'<span class="aka">Claim pending</span> '+(W()?'<button class="btn sm" data-action="cancelclaim" data-id="'+mc.id+'" type="button">Cancel</button>':''):(W()?'<button class="btn sm primary" data-action="claim" data-p="'+esc(n)+'" type="button">Claim</button>':''); }
     else { status='<span class="tag fa">Free agent</span>'; if(W()) action='<button class="btn sm good" data-action="add" data-p="'+esc(n)+'" type="button">Add</button>'; }
     return '<tr><td>'+nameHtml(n)+(c.cap?'<span class="cap">C</span>':'')+'</td><td class="aka">'+(c.type==='stadium'?'<span class="tag std">Stadium</span>':esc(c.group))+'</td><td>'+status+'</td><td class="num">'+action+'</td></tr>';
@@ -596,7 +596,7 @@ function vLeague(){
       +(access.canAdmin?'<div><span class="eyebrow">Danger zone</span><div class="btn-row" style="margin-top:6px"><button class="btn sm bad" data-action="resetask" type="button">Reset league to draft day</button></div></div>':'')
       +'</div>');
   }
-  const info=card('League format','<div class="card-b help"><p style="margin-top:0">Six managers in two conferences. Every team plays its two conference rivals three times and the three teams in the other conference twice: 12 games over 12 weeks, one head-to-head Super Sluggers game a week.</p><p>Rosters hold '+MAX_CHARS+' characters (9 starters, 3 bench) and one home stadium. The home team\'s stadium hosts the game.</p><p style="margin-bottom:0">Conferences: <b>'+esc(CONFS.A.name)+'</b> (Connor, Nolan, Stefano) and <b>'+esc(CONFS.N.name)+'</b> (Matas, James, Brodie).</p></div>');
+  const info=card('League format','<div class="card-b help"><p style="margin-top:0">Six managers in two conferences. Every team plays its two conference rivals three times and the three teams in the other conference twice: 12 games over 12 weeks, one head-to-head Super Sluggers game a week.</p><p>Rosters hold at most '+MAX_CHARS+' characters (9 starters, 2 bench) and exactly one home stadium, which can only be swapped for another stadium. The home team\'s stadium hosts the game.</p><p style="margin-bottom:0">Conferences: <b>'+esc(CONFS.A.name)+'</b> (Connor, Nolan, Stefano) and <b>'+esc(CONFS.N.name)+'</b> (Matas, James, Brodie).</p></div>');
   return '<div class="grid"><div class="stack">'+stand+'</div><div class="stack">'+thisWeek+commish+info+'</div></div>';
 }
 
@@ -640,13 +640,14 @@ async function addLog(type,teamId,text){const id=newId();await write('log',id,{i
 function cloneTeam(id){return JSON.parse(JSON.stringify(team(id)));}
 function removeFromTeam(t,name){ if(t.stadium===name){t.stadium=null;return true;} const i=t.roster.findIndex(r=>r.p===name); if(i<0) return false; t.roster.splice(i,1); if(t.captain===name) t.captain=null; return true; }
 function addToTeam(t,name){ if(isStadium(name)){ if(t.stadium) return 'Already has a stadium'; t.stadium=name; return null; } if(t.roster.length>=MAX_CHARS) return 'Roster is full'; t.roster.push({p:name,slot:'BN'}); return null; }
-function canAcquire(t,name,drop){ const c=JSON.parse(JSON.stringify(t)); if(drop){ if(!removeFromTeam(c,drop)) return 'Drop player is not on the roster'; } return addToTeam(c,name); }
+function canAcquire(t,name,drop){ const c=JSON.parse(JSON.stringify(t)); if(drop){ if(isStadium(drop)&&!isStadium(name)) return 'You must keep a home stadium'; if(!removeFromTeam(c,drop)) return 'Drop player is not on the roster'; } return addToTeam(c,name); }
 function dropNeeded(t,name){ return isStadium(name)?!!t.stadium:t.roster.length>=MAX_CHARS; }
 function dropOptions(t,name){ return isStadium(name)?(t.stadium?[t.stadium]:[]):t.roster.map(r=>r.p); }
 
 async function putOnWaivers(name,byTeam,wv){ const days=S.settings.waiverDays||2; wv.items[name]={clearsAt:new Date(Date.now()+days*864e5).toISOString(),droppedBy:byTeam,droppedAt:new Date().toISOString()}; }
 
 async function doDrop(name){
+  if(isStadium(name)){toast('You must keep a home stadium. Swap it by adding another stadium.','bad');return;}
   const t=cloneTeam(acting); if(!removeFromTeam(t,name)) return;
   const wv=JSON.parse(JSON.stringify(S.waivers||{items:{}})); await putOnWaivers(name,acting,wv);
   await writeMany([['teams',acting,t],['league','waivers',wv]]);
@@ -713,7 +714,7 @@ function tradeModal(partnerId,wantName){
     +'<label>Trade partner<select id="trade-partner" data-tradepartner>'+partners.map(t=>'<option value="'+t.id+'"'+(t.id===p.id?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+'</select></label>'
     +'<div class="two"><div><span class="eyebrow">You send</span><div class="checks">'+items(me).map(n=>'<label><input type="checkbox" name="give" value="'+esc(n)+'">'+esc(n)+'</label>').join('')+'</div></div>'
     +'<div><span class="eyebrow">You get</span><div class="checks">'+items(p).map(n=>'<label><input type="checkbox" name="get" value="'+esc(n)+'"'+(n===wantName?' checked':'')+'>'+esc(n)+'</label>').join('')+'</div></div></div>'
-    +'<div class="help">Both rosters must stay at or under '+MAX_CHARS+' characters and one stadium after the trade. The other manager accepts or rejects it on the Transactions tab.</div>'
+    +'<div class="help">Both rosters must stay at or under '+MAX_CHARS+' characters and keep a home stadium after the trade. The other manager accepts or rejects it on the Transactions tab.</div>'
     +'<div class="btn-row"><button class="btn primary" data-action="tradesend" type="button">Send proposal</button><button class="btn" data-close type="button">Cancel</button></div></div>');
 }
 function applyTrade(tr){
@@ -722,6 +723,8 @@ function applyTrade(tr){
   for(const n of tr.get){ if(!removeFromTeam(b,n)) return {err:n+' is no longer on '+b.name}; }
   for(const n of tr.give){ const e=addToTeam(b,n); if(e) return {err:b.name+': '+e}; }
   for(const n of tr.get){ const e=addToTeam(a,n); if(e) return {err:a.name+': '+e}; }
+  if(!a.stadium) return {err:a.name+' would be left without a home stadium'};
+  if(!b.stadium) return {err:b.name+' would be left without a home stadium'};
   return {a,b};
 }
 async function sendTrade(){

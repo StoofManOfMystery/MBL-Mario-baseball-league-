@@ -198,7 +198,7 @@ tr.empty td{color:var(--muted);font-style:italic}
 const CONFS = {A:{name:'Super League'}, N:{name:'Shitter League'}};
 const POS = ['P','C','1B','2B','3B','SS','LF','CF','RF'];
 const MAX_CHARS = 11;
-const TEAM_ORDER = ['connor','stefano','nolan','matas','james','brodie'];
+const TEAM_ORDER = ['james','stefano','nolan','matas','connor','oakland'];
 // [name, group, captainEligible]
 const CHARACTERS = [
  ['Mario','Mushroom Kingdom',1],['Luigi','Mushroom Kingdom',1],['Peach','Mushroom Kingdom',1],['Daisy','Mushroom Kingdom',1],
@@ -248,27 +248,27 @@ const ALL_NAMES = Object.keys(CHAR);
 const isStadium = n => CHAR[n] && CHAR[n].type==='stadium';
 
 const DRAFT = {
- connor:{name:'Connor',manager:'Connor',conf:'A',color:'#d7191c',picks:['Petey Piranha','Monty Mole','Mario','Red Pianta','Luigi','Red Kritter','Light Blue Yoshi','Baby Daisy','Gray Shy Guy','Blue Toad','Blue Yoshi','Mario Stadium'],udfa:'Green Noki'},
+ connor:{name:'Connor',manager:'Connor',conf:'N',color:'#d7191c',picks:['Petey Piranha','Monty Mole','Mario','Red Pianta','Luigi','Red Kritter','Light Blue Yoshi','Baby Daisy','Gray Shy Guy','Blue Toad','Blue Yoshi','Mario Stadium'],udfa:'Green Noki'},
  stefano:{name:'Stefano',manager:'Stefano',conf:'A',color:'#2e9e4f',picks:['Bowser Jr.','Wiggler','Dark Bones','Hammer Bro','Blue Magikoopa','Toadette','Brown Kritter','Green Koopa Troopa','Blue Dry Bones','Purple Toad',"Bowser Jr.'s Playhouse",'Yellow Shy Guy'],udfa:'Goomba'},
  nolan:{name:'Nolan',manager:'Nolan',conf:'A',color:'#e8750a',picks:['Bowser','Fire Bro','Diddy Kong','Tiny Kong','Baby DK','Green Magikoopa','Green Dry Bones','Green Paratroopa','Red Yoshi','Pink Yoshi','Toad',"Bowser's Castle"],udfa:'Paragoomba'},
  matas:{name:'Matas',manager:'Matas',conf:'N',color:'#6f2dbd',picks:['Waluigi','Blue Pianta','Toadsworth','Peach','Daisy','Wario','Green Kritter','Baby Peach','Baby Mario','Green Toad','Shy Guy','DK Jungle'],udfa:'Baby Luigi'},
- james:{name:'James',manager:'James',conf:'N',color:'#8a5a2b',picks:['Donkey Kong','Funky Kong','Boomerang Bro','Dixie Kong','Yellow Magikoopa','Red Magikoopa','Blue Kritter','Dry Bones','Red Koopa Troopa','Yellow Toad','Wario City','Red Noki'],udfa:'Blue Shy Guy'},
- brodie:{name:"Oakland A's",manager:'Brodie',conf:'N',color:'#0f5c3e',picks:['Birdo','King Boo','Yoshi','Boo','Blooper','King K. Rool','Mii','Yellow Pianta','Red Paratroopa','Yellow Yoshi','Green Shy Guy',"Luigi's Mansion"],udfa:'Blue Noki'},
+ james:{name:'James',manager:'James',conf:'A',color:'#8a5a2b',picks:['Donkey Kong','Funky Kong','Boomerang Bro','Dixie Kong','Yellow Magikoopa','Red Magikoopa','Blue Kritter','Dry Bones','Red Koopa Troopa','Yellow Toad','Wario City','Red Noki'],udfa:'Blue Shy Guy'},
+ oakland:{name:"Oakland A's",manager:"Oakland A's",conf:'N',color:'#0f5c3e',picks:['Birdo','King Boo','Yoshi','Boo','Blooper','King K. Rool','Mii','Yellow Pianta','Red Paratroopa','Yellow Yoshi','Green Shy Guy',"Luigi's Mansion"],udfa:'Blue Noki'},
 };
-// 12 weeks, 3 games a week. Conference rivals meet 3 times, cross-conference twice. Week 1 fixed.
+// 12 weeks, 3 games a week. Conference rivals meet 3 times, cross-conference twice.
 const SCHEDULE = [
- [1,'nolan','stefano'],[1,'brodie','connor'],[1,'james','matas'],
- [2,'connor','stefano'],[2,'matas','nolan'],[2,'brodie','james'],
- [3,'connor','james'],[3,'nolan','brodie'],[3,'stefano','matas'],
- [4,'stefano','connor'],[4,'james','nolan'],[4,'matas','brodie'],
- [5,'connor','brodie'],[5,'stefano','nolan'],[5,'matas','james'],
- [6,'james','connor'],[6,'brodie','nolan'],[6,'matas','stefano'],
- [7,'connor','matas'],[7,'nolan','stefano'],[7,'james','brodie'],
- [8,'nolan','connor'],[8,'brodie','stefano'],[8,'james','matas'],
- [9,'connor','stefano'],[9,'nolan','matas'],[9,'brodie','james'],
- [10,'connor','nolan'],[10,'stefano','james'],[10,'brodie','matas'],
- [11,'matas','connor'],[11,'nolan','james'],[11,'stefano','brodie'],
- [12,'nolan','connor'],[12,'james','stefano'],[12,'matas','brodie'],
+ [1,'nolan','stefano'],[1,'oakland','james'],[1,'connor','matas'],
+ [2,'james','stefano'],[2,'matas','nolan'],[2,'oakland','connor'],
+ [3,'james','connor'],[3,'nolan','oakland'],[3,'stefano','matas'],
+ [4,'stefano','james'],[4,'connor','nolan'],[4,'matas','oakland'],
+ [5,'james','oakland'],[5,'stefano','nolan'],[5,'matas','connor'],
+ [6,'connor','james'],[6,'oakland','nolan'],[6,'matas','stefano'],
+ [7,'james','matas'],[7,'nolan','stefano'],[7,'connor','oakland'],
+ [8,'nolan','james'],[8,'oakland','stefano'],[8,'connor','matas'],
+ [9,'james','stefano'],[9,'nolan','matas'],[9,'oakland','connor'],
+ [10,'james','nolan'],[10,'stefano','connor'],[10,'oakland','matas'],
+ [11,'matas','james'],[11,'nolan','connor'],[11,'stefano','oakland'],
+ [12,'nolan','james'],[12,'connor','stefano'],[12,'matas','oakland'],
 ];
 const WEEKS = 12;
 
@@ -414,7 +414,10 @@ const statLine=n=>STATS[n]?'<span class="statline">'+STATS[n].join(' · ')+'</sp
 const fmtDate=iso=>{const d=new Date(iso);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});};
 function untilText(iso){const ms=new Date(iso).getTime()-Date.now();if(ms<=0)return 'clearing now';const h=Math.floor(ms/36e5),m=Math.floor((ms%36e5)/6e4);if(h>=24)return Math.floor(h/24)+'d '+(h%24)+'h';return h>0?h+'h '+m+'m':m+'m';}
 function avatar(t,lg){ if(!t) return ''; const init=(t.name||'?').trim()[0].toUpperCase(); return '<span class="avatar'+(lg?' lg':'')+'" style="background:'+esc(t.color||'#777')+'">'+esc(init)+'</span>'; }
-function teamline(id,withMgr){const t=team(id); if(!t) return esc(id); return '<button type="button" class="tlink teamline" data-team="'+id+'">'+avatar(t)+'<span class="n">'+esc(t.name)+'</span>'+(withMgr?'<span class="m">'+esc(t.manager)+'</span>':'')+'</button>';}
+const mgrOf=t=>t&&t.manager&&t.manager!==t.name?t.manager:'';
+const nameMgr=t=>esc(t.name)+(mgrOf(t)?' ('+esc(mgrOf(t))+')':'');
+const mgrDot=t=>mgrOf(t)?esc(mgrOf(t))+' · ':'';
+function teamline(id,withMgr){const t=team(id); if(!t) return esc(id); return '<button type="button" class="tlink teamline" data-team="'+id+'">'+avatar(t)+'<span class="n">'+esc(t.name)+'</span>'+(withMgr&&mgrOf(t)?'<span class="m">'+esc(mgrOf(t))+'</span>':'')+'</button>';}
 function rosteredMap(){const m={};teamsList().forEach(t=>{t.roster.forEach(r=>m[r.p]=t.id);if(t.stadium)m[t.stadium]=t.id;});return m;}
 function charCount(t){return t.roster.length;}
 function pendingClaims(){return Object.values(S.claims).filter(c=>c.status==='pending');}
@@ -482,7 +485,7 @@ function render(){
     sel.hidden=false; const cu=commishUnlocked(); mg.querySelector('.mg-locked').hidden=!cu;
     if(cu){ mg.querySelector('.mg-name').textContent='Commissioner'; mg.querySelector('[data-action=lock]').hidden=false; }
     if(!acting||!team(acting)) acting=TEAM_ORDER[0];
-    sel.innerHTML=teamsList().map(t=>'<option value="'+t.id+'"'+(t.id===acting?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('');
+    sel.innerHTML=teamsList().map(t=>'<option value="'+t.id+'"'+(t.id===acting?' selected':'')+'>'+nameMgr(t)+'</option>').join('');
   }
   const fn={team:vTeam,players:vPlayers,matchups:vMatchups,league:vLeague,schedule:vSchedule,transactions:vTransactions,draft:vDraft}[ui.tab]||vTeam;
   view.innerHTML=fn();
@@ -500,7 +503,7 @@ const ADMIN=()=>access.mode==='local'||isAdmin();
 function lockCard(){
   return '<section class="card" style="max-width:460px;margin:24px auto"><div class="card-h"><h2>Enter your team passcode</h2></div><div class="card-b form">'
     +'<p class="help" style="margin:0">Each manager has a 6-digit passcode from the commissioner. It unlocks your team on this device only.</p>'
-    +'<label>Team<select id="lock-team">'+teamsList().map(t=>'<option value="'+t.id+'"'+((unlock&&unlock.team===t.id)?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+(S.passcodes&&S.passcodes.commissioner?'<option value="__commish">Commissioner</option>':'')+'</select></label>'
+    +'<label>Team<select id="lock-team">'+teamsList().map(t=>'<option value="'+t.id+'"'+((unlock&&unlock.team===t.id)?' selected':'')+'>'+nameMgr(t)+'</option>').join('')+(S.passcodes&&S.passcodes.commissioner?'<option value="__commish">Commissioner</option>':'')+'</select></label>'
     +'<label>Passcode<input id="lock-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="6 digits"></label>'
     +'<div class="btn-row"><button class="btn primary" data-action="unlock" type="button">Unlock my team</button></div></div></section>';
 }
@@ -519,9 +522,9 @@ function matchupCard(g,editable){
       :'<button class="btn sm" data-action="savescore" data-game="'+g.id+'" type="button">Save</button><button class="btn sm primary" data-action="final" data-game="'+g.id+'" type="button">Mark final</button>')+'</span>';
   }
   return '<section class="card"><div class="matchup">'
-    +'<div class="side'+(win===a.id?' win':'')+'" data-team="'+a.id+'">'+avatar(a,true)+'<span class="n">'+esc(a.name)+'</span><span class="r">'+esc(a.manager)+' · '+record(a.id)+' · Away</span></div>'
+    +'<div class="side'+(win===a.id?' win':'')+'" data-team="'+a.id+'">'+avatar(a,true)+'<span class="n">'+esc(a.name)+'</span><span class="r">'+mgrDot(a)+record(a.id)+' · Away</span></div>'
     +score
-    +'<div class="side'+(win===h.id?' win':'')+'" data-team="'+h.id+'">'+avatar(h,true)+'<span class="n">'+esc(h.name)+'</span><span class="r">'+esc(h.manager)+' · '+record(h.id)+' · Home</span></div>'
+    +'<div class="side'+(win===h.id?' win':'')+'" data-team="'+h.id+'">'+avatar(h,true)+'<span class="n">'+esc(h.name)+'</span><span class="r">'+mgrDot(h)+record(h.id)+' · Home</span></div>'
     +'</div><div class="matchup-foot">'+foot+'</div></section>';
 }
 
@@ -529,7 +532,7 @@ function vTeam(){
   const t=team(acting); const st=standings(); const row=st.find(r=>r.id===acting);
   const confRows=st.filter(r=>r.conf===t.conf); const confRank=confRows.findIndex(r=>r.id===acting)+1;
   const wo=S.settings.waiverOrder||[]; const prio=wo.indexOf(acting)+1;
-  const head='<section class="card"><div class="card-b teamhead">'+avatar(t,true)+'<div><h1>'+esc(t.name)+'</h1><div class="meta">'+esc(t.manager)+' · '+esc(CONFS[t.conf].name)+(W()?' · <button class="btn sm" data-action="rename" type="button">Rename team</button>':'')+'</div></div>'
+  const head='<section class="card"><div class="card-b teamhead">'+avatar(t,true)+'<div><h1>'+esc(t.name)+'</h1><div class="meta">'+mgrDot(t)+esc(CONFS[t.conf].name)+(W()?' · <button class="btn sm" data-action="rename" type="button">Rename team</button>':'')+'</div></div>'
     +'<div class="stats"><div class="stat"><b>'+(row?row.w+'-'+row.l:'0-0')+'</b><span>Record</span></div><div class="stat"><b>'+confRank+'<small style="font-size:12px">/'+confRows.length+'</small></b><span>Conf rank</span></div><div class="stat"><b>'+(row?(row.diff>0?'+':'')+row.diff:'0')+'</b><span>Run diff</span></div><div class="stat"><b>'+(prio||'-')+'</b><span>Waiver #</span></div></div></div></section>';
 
   const g=weekGames(viewWeek()).find(x=>x.home===acting||x.away===acting);
@@ -619,7 +622,7 @@ function openTeam(id){
   const rowHtml=(r,slot)=>r?'<tr><td><span class="slot'+(slot==='BN'?' bn':'')+'">'+slot+'</span></td><td>'+nameHtml(r.p)+(t.captain===r.p?'<span class="cap">C</span>':'')+'</td><td>'+statLine(r.p)+'</td></tr>':'<tr class="empty"><td><span class="slot">'+slot+'</span></td><td colspan="2">Empty</td></tr>';
   const rows=POS.map(p=>rowHtml(t.roster.find(r=>r.slot===p),p)).join('')+t.roster.filter(r=>r.slot==='BN').map(r=>rowHtml(r,'BN')).join('');
   openModal(esc(t.name),'<div class="form">'
-    +'<div class="pm-head">'+avatar(t,true)+'<div><h3>'+esc(t.name)+'</h3><div class="aka">'+esc(t.manager)+' · '+esc(CONFS[t.conf].name)+' · '+row.w+'-'+row.l+' · run diff '+(row.diff>0?'+':'')+row.diff+' · waiver #'+(wo.indexOf(id)+1)+'</div></div></div>'
+    +'<div class="pm-head">'+avatar(t,true)+'<div><h3>'+esc(t.name)+'</h3><div class="aka">'+mgrDot(t)+esc(CONFS[t.conf].name)+' · '+row.w+'-'+row.l+' · run diff '+(row.diff>0?'+':'')+row.diff+' · waiver #'+(wo.indexOf(id)+1)+'</div></div></div>'
     +'<div><span class="tag std">'+esc(t.stadium||'No stadium')+'</span> <span class="aka">'+t.roster.length+' / '+MAX_CHARS+' characters</span></div>'
     +'<div class="tbl-wrap" style="border:1px solid var(--line);border-radius:8px"><table><thead><tr><th>Slot</th><th>Player</th><th>P · B · F · R</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
     +(W()&&acting&&id!==acting?'<div class="btn-row"><button class="btn primary" data-action="tradefor" data-team="'+id+'" type="button">Propose a trade</button></div>':'')+'</div>');
@@ -657,7 +660,7 @@ function vLeague(){
       +(access.canAdmin?'<div><span class="eyebrow">Danger zone</span><div class="btn-row" style="margin-top:6px"><button class="btn sm bad" data-action="resetask" type="button">Reset league to draft day</button></div></div>':'')
       +'</div>');
   }
-  const info=card('League format','<div class="card-b help"><p style="margin-top:0">Six managers in two conferences. Every team plays its two conference rivals three times and the three teams in the other conference twice: 12 games over 12 weeks, one head-to-head Super Sluggers game a week.</p><p>Rosters hold at most '+MAX_CHARS+' characters (9 starters, 2 bench) and exactly one home stadium, which can only be swapped for another stadium. The home team\'s stadium hosts the game.</p><p style="margin-bottom:0">Conferences: <b>'+esc(CONFS.A.name)+'</b> (Connor, Nolan, Stefano) and <b>'+esc(CONFS.N.name)+'</b> (Matas, James, Brodie).</p></div>');
+  const info=card('League format','<div class="card-b help"><p style="margin-top:0">Six managers in two conferences. Every team plays its two conference rivals three times and the three teams in the other conference twice: 12 games over 12 weeks, one head-to-head Super Sluggers game a week.</p><p>Rosters hold at most '+MAX_CHARS+' characters (9 starters, 2 bench) and exactly one home stadium, which can only be swapped for another stadium. The home team\'s stadium hosts the game.</p><p style="margin-bottom:0">Conferences: '+['A','N'].map(c=>'<b>'+esc(CONFS[c].name)+'</b> ('+teamsList().filter(t=>t.conf===c).map(nameMgr).join(', ')+')').join(' and ')+'.</p></div>');
   return '<div class="grid"><div class="stack">'+stand+'</div><div class="stack">'+thisWeek+commish+info+'</div></div>';
 }
 
@@ -682,7 +685,7 @@ function vTransactions(){
 }
 
 function vDraft(){
-  const head='<tr><th class="rd">Rd</th>'+TEAM_ORDER.map(id=>'<th>'+esc(DRAFT[id].name)+'<br><span class="aka">'+esc(DRAFT[id].manager)+' · '+esc(CONFS[DRAFT[id].conf].name)+'</span></th>').join('')+'</tr>';
+  const head='<tr><th class="rd">Rd</th>'+TEAM_ORDER.map(id=>'<th>'+esc(DRAFT[id].name)+'<br><span class="aka">'+mgrDot(DRAFT[id])+esc(CONFS[DRAFT[id].conf].name)+'</span></th>').join('')+'</tr>';
   const rows=[]; for(let r=0;r<12;r++) rows.push('<tr><td class="rd">'+(r+1)+'</td>'+TEAM_ORDER.map(id=>{const p=DRAFT[id].picks[r];return '<td'+(isStadium(p)?' class="std"':'')+'>'+nameHtml(p)+'</td>';}).join('')+'</tr>');
   rows.push('<tr class="udfa"><td class="rd">UDFA</td>'+TEAM_ORDER.map(id=>'<td>'+nameHtml(DRAFT[id].udfa)+'</td>').join('')+'</tr>');
   return card('Draft results','<div class="tbl-wrap"><table class="draft"><thead>'+head+'</thead><tbody>'+rows.join('')+'</tbody></table></div><div class="card-b help">Stadium picks are in purple. The red row is each team\'s undrafted free agent signing. Every one of the 72 Super Sluggers characters was taken, so the free-agent pool starts with only the three undrafted stadiums: Peach Ice Garden, Daisy Cruiser and Yoshi Park.</div>','As drafted');
@@ -772,7 +775,7 @@ function tradeModal(partnerId,wantName){
   const p=team(partnerId)||partners[0];
   const items=t=>[...t.roster.map(r=>r.p),...(t.stadium?[t.stadium]:[])];
   openModal('Propose a trade','<div class="form">'
-    +'<label>Trade partner<select id="trade-partner" data-tradepartner>'+partners.map(t=>'<option value="'+t.id+'"'+(t.id===p.id?' selected':'')+'>'+esc(t.name)+' ('+esc(t.manager)+')</option>').join('')+'</select></label>'
+    +'<label>Trade partner<select id="trade-partner" data-tradepartner>'+partners.map(t=>'<option value="'+t.id+'"'+(t.id===p.id?' selected':'')+'>'+nameMgr(t)+'</option>').join('')+'</select></label>'
     +'<div class="two"><div><span class="eyebrow">You send</span><div class="checks">'+items(me).map(n=>'<label><input type="checkbox" name="give" value="'+esc(n)+'">'+esc(n)+'</label>').join('')+'</div></div>'
     +'<div><span class="eyebrow">You get</span><div class="checks">'+items(p).map(n=>'<label><input type="checkbox" name="get" value="'+esc(n)+'"'+(n===wantName?' checked':'')+'>'+esc(n)+'</label>').join('')+'</div></div></div>'
     +'<div class="help">Both rosters must stay at or under '+MAX_CHARS+' characters and keep a home stadium after the trade. The other manager accepts or rejects it on the Transactions tab.</div>'
@@ -879,7 +882,7 @@ document.getElementById('app').addEventListener('click',async e=>{
         break;}
       case 'unlock': {const tid=document.getElementById('lock-team').value; const code=document.getElementById('lock-code').value.trim(); if(!/^\d{6}$/.test(code)){toast('Enter the 6-digit code','bad');return;} const h=await sha256(code);
         if(tid==='__commish'){ if(S.passcodes&&S.passcodes.commissioner&&S.passcodes.commissioner.hash===h){unlock={team:'__commish',hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, commissioner'); render();} else toast('Wrong commissioner passcode','bad'); break; }
-        if(S.passcodes&&S.passcodes[tid]&&S.passcodes[tid].hash===h){unlock={team:tid,hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, '+team(tid).manager); render();} else toast('Wrong passcode for '+team(tid).name,'bad'); break;}
+        if(S.passcodes&&S.passcodes[tid]&&S.passcodes[tid].hash===h){unlock={team:tid,hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){} toast('Welcome, '+(mgrOf(team(tid))||team(tid).name)); render();} else toast('Wrong passcode for '+team(tid).name,'bad'); break;}
       case 'lock': unlock=null; try{localStorage.removeItem('mbl-unlock');}catch(x){} ui.tab='team'; render(); break;
       case 'setcode': {const tid=el.dataset.id; const code=document.getElementById('pc-'+tid).value.trim(); if(!/^\d{6}$/.test(code)){toast('Passcodes are exactly 6 digits','bad');return;} const pc=JSON.parse(JSON.stringify(S.passcodes||{})); const key=tid==='__commish'?'commissioner':tid; const h=await sha256(code); pc[key]={hash:h}; pc.updatedAt=new Date().toISOString(); if(key==='commissioner'&&commishUnlocked()){unlock={team:'__commish',hash:h};try{localStorage.setItem('mbl-unlock',JSON.stringify(unlock));}catch(x){}} await write('league','passcodes',pc); toast('Passcode set for '+(key==='commissioner'?'the commissioner':team(tid).name)); render(); break;}
       case 'waiverclear': {const wv=JSON.parse(JSON.stringify(S.waivers||{items:{}})); const names=p?[p]:Object.keys(wv.items); if(!names.length) return; const now=new Date(Date.now()-1000).toISOString(); names.forEach(n=>{ if(wv.items[n]) wv.items[n].clearsAt=now; }); await write('league','waivers',wv); await addLog('waiver',null,'Commissioner cleared waivers early for '+names.join(', ')+'.'); await checkWaivers(); toast('Waivers cleared'); render(); break;}

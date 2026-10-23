@@ -7,13 +7,13 @@ A Yahoo-Fantasy-style web app for a six-manager Mario Super Sluggers league.
 
 ## League format
 
-- Two conferences: **Super League** (Connor, Nolan, Stefano) and **Shitter League** (Matas, James, Brodie).
+- Two conferences: **Super League** (James, Nolan, Stefano) and **Shitter League** (Matas, Connor, Oakland A's).
 - Each team plays its two conference rivals three times and the other three teams twice: 12 games over 12 weeks, one game a week.
 - Rosters hold at most 11 characters (9 starters + 2 bench) and exactly one home stadium, which can only be swapped for another stadium. The home team's stadium hosts the game.
 - Dropped players sit on waivers (2 days by default). Claims resolve in waiver-priority order; the winning team moves to the bottom of the order. Unclaimed players become free agents.
 - Trades are proposed by one manager and accepted or rejected by the other.
 
-Week 1: Stefano @ Nolan, Connor @ Oakland A's (Brodie), Matas @ James.
+Week 1: Stefano @ Nolan, James @ Oakland A's, Matas @ Connor.
 
 ## Passcodes
 
